@@ -20,7 +20,7 @@ export class Token {
     }
 }
 
-export abstract class TokenTypesTable {
+export abstract class TOKEN_TYPES {
     // empty
     static "new_line" = new TokenType("new_line","\n")
     static "tab" = new TokenType("tab","\t")
@@ -34,9 +34,14 @@ export abstract class TokenTypesTable {
     static "func_decl_mark" = new TokenType("func_decl_mark", "\\.")
     static "func_params_mark" = new TokenType("func_params_mark", "\\#")
     static "type_mark" = new TokenType("type_mark", "\\@")
+    // system
+    static "lpar" = new TokenType("lpar", "\\(")
+    static "rpar" = new TokenType("rpar", "\\)")
     // general
     static "number" = new TokenType("number","([0-9]*[.])?[0-9]+")
     static "identifier" = new TokenType("identifier", "[a-z]*")
+    // end of file
+    static "EOF" = new TokenType("EOF", "");
 }
 
 // export default {
