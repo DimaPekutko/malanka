@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+      "target": "es5",
+      "removeComments": true,
+      "sourceMap": true,
+      "watch": true,
+      "outFile": "./dist/compiled.js",
+      "rootDir": "src",
+      "strict": true,
+      "noImplicitAny": true,
+      "esModuleInterop": true,
+      "resolveJsonModule": true
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "malanka",
+  "version": "1.0.0",
+  "description": "Malanka compiler for Malanka programming language",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://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@github.com/DimaPekutko/malanka.git"
+  },
+  "keywords": [
+    "malanka",
+    "compiler",
+    "nasm",
+    "language",
+    "transpiler"
+  ],
+  "author": "Dmitry Pekutko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DimaPekutko/malanka/issues"
+  },
+  "homepage": "https://github.com/DimaPekutko/malanka#readme",
+  "devDependencies": {
+    "@types/node": "^17.0.9",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
+  }
+}
