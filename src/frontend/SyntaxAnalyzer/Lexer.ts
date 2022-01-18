@@ -4,8 +4,8 @@ export class Lexer {
     readonly code: string
     readonly TAB_SIZE = 3
     tokens: Token[] = []
-    row: number = 0
-    col: number = 0
+    row: number = 1
+    col: number = 1
     pos: number = 0
     constructor(code: string) {
         this.code = code

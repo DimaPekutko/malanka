@@ -1,4 +1,4 @@
-import { Token } from './Tokens';
+import { Token } from 'frontend/SyntaxAnalyzer/Tokens';
 
 export abstract class AstNode {
     token!: Token
@@ -29,10 +29,10 @@ export class BinOpNode extends AstNode {
 }
 
 export class UnOpNode extends AstNode {
-    right: AstNode
-    constructor(op: Token, right: AstNode) {
+    left: AstNode
+    constructor(op: Token, left: AstNode) {
         super();
-        this.right = right;
+        this.left = left;
         this.token = op;
     }
 }

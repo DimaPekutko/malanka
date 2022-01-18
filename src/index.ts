@@ -1,17 +1,22 @@
-import { Parser } from './frontend/Parser';
-import { Lexer } from './frontend/Lexer';
+import { dump } from './utils';
+import { Parser } from './frontend/SyntaxAnalyzer/Parser';
+import { Lexer } from './frontend/SyntaxAnalyzer/Lexer';
+import { Linux_x86_64 } from 'backend/x86_64/Linux_x86_64';
 
 const TEST_SOURCE_CODE = 
-`1+2`
+`127-43-321+43`
 
 const main = (): void => {
-    let lexer = new Lexer(TEST_SOURCE_CODE);    
-    let tokens = lexer.tokenize();
+    let lexer = new Lexer(TEST_SOURCE_CODE)    
+    let tokens = lexer.tokenize()
+    // dump(tokens)
+   
     let parser = new Parser(tokens)
-    console.log(tokens)
-    parser.parse();
+    let ast = parser.parse()
+    // dump(ast)
 
+    let compiler = new Linux_x86_64(ast, "test")
+    compiler.compile();
 }
 
-
-main()
+main();

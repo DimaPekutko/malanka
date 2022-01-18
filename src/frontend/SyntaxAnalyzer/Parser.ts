@@ -1,6 +1,5 @@
-import { ErrorManager } from '../utils/ErrorManager';
-import { AstNode, BinOpNode, NumLiteralNode, UnOpNode } from './AST';
-import { Token, TokenType, TOKEN_TYPES } from './Tokens';
+import { AstNode, BinOpNode, NumLiteralNode, UnOpNode } from "frontend/AST/AST"
+import { Token, TokenType, TOKEN_TYPES } from './Tokens'
 
 
 export class Parser {
@@ -8,20 +7,24 @@ export class Parser {
     private current_token!: Token
     constructor(tokens: Token[]) {
         this.tokens = tokens
+        this.get_next_token()
+        this.skip_new_lines()
     }
     private get_next_token(): Token {
         this.current_token = this.tokens.shift()!        
         return this.current_token
     }
-    private eat(type: TokenType) {
-        // skip new lines
-        if(this.current_token?.type === TOKEN_TYPES.new_line &&
-            this.current_token.type!== type) 
+    private skip_new_lines(): void {
+        if(this.current_token?.type === TOKEN_TYPES.new_line) 
         {
             while(this.current_token?.type === TOKEN_TYPES.new_line) {
                 this.get_next_token()
             }
         }
+    }
+    private eat(type: TokenType): void {
+        if(type !== TOKEN_TYPES.new_line) 
+            this.skip_new_lines();
 
         if(this.current_token?.type.name === type.name) {
             this.get_next_token()
@@ -65,27 +68,34 @@ export class Parser {
     }
     private parse_factor(): AstNode {
         let node = null
+        let cur_token = this.current_token;
         if(this.current_token.type === TOKEN_TYPES.number) {
-            node = new NumLiteralNode(this.current_token)
             this.eat(TOKEN_TYPES.number)
+            node = new NumLiteralNode(cur_token)
             return node 
         }
         else if(this.current_token.type === TOKEN_TYPES.plus_op) {
-            node = new UnOpNode(this.current_token, this.parse_factor())
             this.eat(TOKEN_TYPES.plus_op)
+            node = new UnOpNode(cur_token, this.parse_factor())
             return node 
         }
         else if(this.current_token.type === TOKEN_TYPES.minus_op) {
-            node = new UnOpNode(this.current_token, this.parse_factor())
             this.eat(TOKEN_TYPES.minus_op)
-            return node 
+            node = new UnOpNode(cur_token, this.parse_factor())
+            return node
+        }
+        else if(this.current_token.type === TOKEN_TYPES.lpar) {
+            this.eat(TOKEN_TYPES.lpar)
+            node = this.parse_expr();
+            this.eat(TOKEN_TYPES.rpar)
+            return node
         }
         else {
             // error
-            process.exit()
+            throw new Error("Undefined factor.");
         }
     }
-    parse(): void {
-        this.get_next_token()
+    parse(): AstNode {
+        return this.parse_expr();
     }
 }
