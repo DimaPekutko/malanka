@@ -25,23 +25,30 @@ export abstract class TOKEN_TYPES {
     static "new_line" = new TokenType("new_line","\n")
     static "tab" = new TokenType("tab","\t")
     static "space" = new TokenType("space"," ")
+    static "lpar" = new TokenType("lpar", "\\(")
+    static "rpar" = new TokenType("rpar", "\\)")
+    static "comma" = new TokenType("comma", "\\,")
     // operations
     static "plus_op" = new TokenType("plus_op", "\\+")
     static "minus_op" = new TokenType("minus_op", "\\-")
     static "mul_op" = new TokenType("mul_op", "\\*")
     static "div_op" = new TokenType("div_op", "\\/")
+    static "assign_op" = new TokenType("assign_op", "\\=")
     // marks
+    static "block_start" = new TokenType("block_start", "\\:")
     static "func_decl_mark" = new TokenType("func_decl_mark", "\\.")
     static "func_params_mark" = new TokenType("func_params_mark", "\\#")
     static "type_mark" = new TokenType("type_mark", "\\@")
-    // system
-    static "lpar" = new TokenType("lpar", "\\(")
-    static "rpar" = new TokenType("rpar", "\\)")
+    // strings
+    static "string_quote" = new TokenType("string_quote", '\\"')
+    // imports
+    static "shared_import_key" = new TokenType("shared_import_key", "dynamic")
     // general
     static "number" = new TokenType("number","([0-9]*[.])?[0-9]+")
-    static "identifier" = new TokenType("identifier", "[a-z]*")
+    static "identifier" = new TokenType("identifier", "[a-z\\_]*")
+    static "string" = new TokenType("string", "")
     // end of file
-    static "EOF" = new TokenType("EOF", "");
+    static "EOF" = new TokenType("EOF", "")
 }
 
 // export default {
