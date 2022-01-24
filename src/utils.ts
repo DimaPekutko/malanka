@@ -1,6 +1,7 @@
 import util from "util"; 
 import { execSync } from "child_process"
 import { readFileSync } from "fs";
+import chalk from "chalk";
 
 // log full object
 export const dump = (obj: any) :void => {
@@ -30,7 +31,7 @@ export abstract class SharedLibManager {
     static get_lib_symbols(path: string): string {
         const cmd =
             `readelf -d -T --dyn-syms ${path} | `+
-            `grep GLOBAL | `+
+            // `grep GLOBAL | `+
             `awk 'BEGIN { ORS = ""; print " [ "}
             { printf "%s{\\"size\\": \\"%s\\", \\"type\\": \\"%s\\", \\"name\\": \\"%s\\"}",
                   separator, $3, $4, $8
@@ -40,5 +41,25 @@ export abstract class SharedLibManager {
         let output: Buffer = execSync(cmd)
         let res_string: string = Buffer.from(output).toString()
         return res_string
+    }
+}
+
+export abstract class LogManager {
+    private static full_log = ``
+    static error(msg: string, from: string): void {
+        let error = chalk.red("[ERROR] ") + from + ": " + msg
+        console.log(error)
+        this.full_log += (error + "\n")
+        exit()
+    }
+    static log(msg: string, from: string) {
+        let message = chalk.blueBright("[LOG] ") + from + ": " + msg
+        console.log(message)
+        this.full_log += (message + "\n")
+    }
+    static success(msg: string, from: string) {
+        let message = chalk.greenBright("[SUCCESS] ") + from + ": " + msg
+        console.log(message)
+        this.full_log += (message + "\n")
     }
 }

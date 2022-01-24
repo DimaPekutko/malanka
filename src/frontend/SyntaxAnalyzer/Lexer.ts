@@ -1,4 +1,4 @@
-import { dump, exit } from './../../utils';
+import { dump, exit, LogManager } from './../../utils';
 import { Token, TOKEN_TYPES } from './Tokens';
 
 export class Lexer {
@@ -75,7 +75,7 @@ export class Lexer {
                 return
             }
         }
-        throw new Error("Undefined token in lexer")
+        LogManager.error(`Undefined token in ${this.row}:${this.col}.`, "Lexer.ts")
     }   
 
 }

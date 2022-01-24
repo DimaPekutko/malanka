@@ -34,6 +34,8 @@ export abstract class TOKEN_TYPES {
     static "mul_op" = new TokenType("mul_op", "\\*")
     static "div_op" = new TokenType("div_op", "\\/")
     static "assign_op" = new TokenType("assign_op", "\\=")
+    static "and_op" = new TokenType("and_op", "\\and")
+    static "or_op" = new TokenType("or_op", "\\or")
     // marks
     static "block_start" = new TokenType("block_start", "\\:")
     static "func_decl_mark" = new TokenType("func_decl_mark", "\\.")
@@ -45,7 +47,7 @@ export abstract class TOKEN_TYPES {
     static "shared_import_key" = new TokenType("shared_import_key", "dynamic")
     // general
     static "number" = new TokenType("number","([0-9]*[.])?[0-9]+")
-    static "identifier" = new TokenType("identifier", "[a-z\\_]*")
+    static "identifier" = new TokenType("identifier", "([A-Za-z0-9\_]+)")
     static "string" = new TokenType("string", "")
     // end of file
     static "EOF" = new TokenType("EOF", "")

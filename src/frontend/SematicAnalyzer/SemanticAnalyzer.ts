@@ -1,4 +1,4 @@
-import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode } from 'frontend/AST/AST';
+import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode } from 'frontend/AST/AST';
 import { INodeVisitor } from 'frontend/AST/INodeVisitor';
 import { SymbolManager } from 'frontend/SymbolManager';
 
@@ -26,7 +26,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         this.visit(node.right)
     }
     visit_UnOpNode(node: UnOpNode): void {
-        throw new Error("Method not implemented.");
+        this.visit(node.left)
     }
     visit_LiteralNode(node: LiteralNode): void {
        
@@ -42,6 +42,9 @@ export class SemanticAnalyzer implements INodeVisitor {
     }
     visit_SharedImpStmNode(node: SharedImpStmNode): void {
         this.symbol_manager.load_shared_symbols(node.str.token.value)
+    }
+    visit_EOFStmNode(node: EOFStmNode): void {
+        
     }
     visit(node: AstNode): any {
         // It's dirty, but there are no need to write a complex if else structure

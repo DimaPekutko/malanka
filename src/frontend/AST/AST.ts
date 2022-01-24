@@ -85,3 +85,9 @@ export class SharedImpStmNode extends AstStatementNode {
         this.str = str
     }
 }
+
+export class EOFStmNode extends AstStatementNode {
+    constructor() {
+        super()
+    }
+}

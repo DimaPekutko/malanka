@@ -1,6 +1,7 @@
-import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode } from './../AST/AST';
+import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode } from './../AST/AST';
 import { AstNode, BinOpNode, LiteralNode, UnOpNode } from "frontend/AST/AST"
 import { Token, TokenType, TOKEN_TYPES } from './Tokens'
+import { exit, LogManager } from 'utils';
 
 
 export class Parser {
@@ -41,7 +42,10 @@ export class Parser {
             this.get_next_token()
         }
         else {
-            throw new Error("Undefined token " + this.current_token)
+            LogManager.error(
+                `Unexpected token ${this.current_token.value} but required ${type.name} token type in ${this.current_token.row}:${this.current_token.col}.`,
+                "Parser.ts"
+            )
         }
     }
     private peek(): Token {
@@ -49,9 +53,10 @@ export class Parser {
     }
     private parse_program(): ProgramNode {
         let statements: AstStatementNode[] = []
-        while(this.current_token.type !== TOKEN_TYPES.EOF) {
+        while(true) {
             let stm = this.parse_stm()
             statements.push(stm)
+            if (stm instanceof EOFStmNode) break
             if(this.current_token.type !== TOKEN_TYPES.EOF) {
                 this.eat(TOKEN_TYPES.new_line)
             }
@@ -84,9 +89,15 @@ export class Parser {
         else if (this.current_token.type === TOKEN_TYPES.shared_import_key) {
             return this.parse_shared_import()
         }
+        else if (this.current_token.type === TOKEN_TYPES.EOF) {
+            return new EOFStmNode()
+        }
         else {
-            console.log(this.current_token.type.name)
-            throw new Error("Undefined statement in Parser.")
+            LogManager.error(
+                `Unexpected statement in ${this.current_token.row}:${this.current_token.col}.`,
+                "Parser.ts"
+            )
+            process.exit()
         }
     }
     private parse_assignment(): AssignStmNode {
@@ -167,8 +178,14 @@ export class Parser {
             return node 
         }
         else if(this.current_token.type === TOKEN_TYPES.identifier) {
-            this.eat(TOKEN_TYPES.identifier)
-            node = new VarNode(cur_token.value)
+            let next_token = this.peek()
+            if(next_token.type === TOKEN_TYPES.lpar) {
+                node = this.parse_funccall()
+            }
+            else {
+                this.eat(TOKEN_TYPES.identifier)
+                node = new VarNode(cur_token.value)
+            }
             return node
         }
         else if(this.current_token.type === TOKEN_TYPES.plus_op) {
@@ -188,8 +205,10 @@ export class Parser {
             return node
         }
         else {
-            // error
-            throw new Error("Undefined factor.");
+            LogManager.error(
+                `Unexpectod token in ${this.current_token.row}:${this.current_token.col}.`,
+                 "Parser.ts")
+            process.exit()
         }
     }
     parse(): AstNode {

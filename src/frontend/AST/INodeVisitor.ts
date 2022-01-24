@@ -1,4 +1,4 @@
-import {ProgramNode, BinOpNode, UnOpNode, LiteralNode, AstNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode} from "./AST"
+import {ProgramNode, BinOpNode, UnOpNode, LiteralNode, AstNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode} from "./AST"
 
 export interface INodeVisitor {
     visit_ProgramNode(node: ProgramNode): void
@@ -10,5 +10,6 @@ export interface INodeVisitor {
     visit_VarNode(node: VarNode): void
     visit_FuncCallStmNode(node: FuncCallStmNode): void
     visit_SharedImpStmNode(node: SharedImpStmNode): void
+    visit_EOFStmNode(node: EOFStmNode): void
     visit(node: AstNode): void
 }
