@@ -1300,9 +1300,41 @@ _start:
 	extern vwarn
 	extern fts64_clo
 	extern wcpcpy
-	mov rax, 1
-	; var a assignment
+	; arithmetic op
+	mov rax, 2
+	push rax
+	mov rax, 3
+	mov rbx, rax
+	pop rax
+	add rax, rbx
 	mov [a], rax
+	; arithmetic op
+	mov rax, [a]
+	push rax
+	mov rax, 1
+	mov rbx, rax
+	pop rax
+	add rax, rbx
+	mov [a], rax
+	; ------ funccall -> printf
+	push rdi
+	push rsi
+	push rdx
+	push rcx
+	push r8
+	push r9
+	mov rax, str_qb6YAW9Aun
+	mov rdi, rax
+	mov rax, [a]
+	mov rsi, rax
+	call printf
+	pop r9
+	pop r8
+	pop rcx
+	pop rdx
+	pop rsi
+	pop rdi
+	; ------ funccall end -> printf
 	; exit
 	mov rax, 60
 	xor rdi, rdi
@@ -1311,3 +1343,4 @@ _start:
 segment .bss
 	a resb 8
 segment .data
+	str_qb6YAW9Aun db "hello, a=%d",0xa,0

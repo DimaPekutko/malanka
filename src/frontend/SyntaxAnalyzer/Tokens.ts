@@ -41,13 +41,14 @@ export abstract class TOKEN_TYPES {
     static "func_decl_mark" = new TokenType("func_decl_mark", "\\.")
     static "func_params_mark" = new TokenType("func_params_mark", "\\#")
     static "type_mark" = new TokenType("type_mark", "\\@")
-    // strings
-    static "string_quote" = new TokenType("string_quote", '\\"')
     // imports
     static "shared_import_key" = new TokenType("shared_import_key", "dynamic")
     // general
     static "number" = new TokenType("number","([0-9]*[.])?[0-9]+")
     static "identifier" = new TokenType("identifier", "([A-Za-z0-9\_]+)")
+    // static "type_identifier" = new TokenType("type_identifier", "@([A-Za-z0-9\_]+)")
+    // strings
+    static "string_quote" = new TokenType("string_quote", '\\"')
     static "string" = new TokenType("string", "")
     // end of file
     static "EOF" = new TokenType("EOF", "")

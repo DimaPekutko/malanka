@@ -4,7 +4,7 @@ import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 
-import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode } from "frontend/AST/AST";
+import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from "frontend/AST/AST";
 import { INodeVisitor } from "frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "frontend/SyntaxAnalyzer/Tokens";
 
@@ -60,9 +60,6 @@ export class Linux_x86_64 implements INodeVisitor {
     visit_AssignStmNode(node: AssignStmNode): void {
         let var_name: string = node.name
         this.visit(node.value)
-        this.nasm.bss(`${var_name} resb 8`)
-        this.nasm.text(`; var ${var_name} assignment`)
-        // this.nasm.text("pop rax")
         this.nasm.text(`mov [${var_name}], rax`)
     }
     visit_BinOpNode(node: BinOpNode): void {
@@ -78,7 +75,6 @@ export class Linux_x86_64 implements INodeVisitor {
         else if (node.token.type === TOKEN_TYPES.minus_op) {
             this.nasm.text(`sub rax, rbx`)
         }
-        // need to change mul and div ops here
         else if (node.token.type === TOKEN_TYPES.mul_op) {
             this.nasm.text(`imul rbx`)
         }
@@ -107,6 +103,12 @@ export class Linux_x86_64 implements INodeVisitor {
             this.nasm.text(`mov rax, ${str_name}`)
         }
     }
+    visit_VarDeclStmNode(node: VarDeclStmNode): void {
+        let var_name: string = node.var_name
+        this.visit(node.init_value)
+        this.nasm.bss(`${var_name} resb 8`)
+        this.nasm.text(`mov [${var_name}], rax`)
+    }
     visit_VarNode(node: VarNode): void {
         let name = node.name
         // this.nasm.text(`; push var to stack`)
@@ -119,7 +121,6 @@ export class Linux_x86_64 implements INodeVisitor {
         const arg_registers = [
             "rdi","rsi","rdx","rcx","r8","r9"
         ]
-        
 
         const defined_func = this.symbol_manager.GLOBAL_SCOPE.get(func_name)
 
@@ -128,7 +129,7 @@ export class Linux_x86_64 implements INodeVisitor {
         }
 
         if(args.length <= arg_registers.length) {
-            this.nasm.text(`; calling func: ${func_name}`)
+            this.nasm.text(`; ------ funccall -> ${func_name}`)
             // saving current arg registers
             for(let i = 0; i < arg_registers.length; i++) {
                 this.nasm.text(`push ${arg_registers[i]}`)
@@ -140,10 +141,11 @@ export class Linux_x86_64 implements INodeVisitor {
             }
             // calling current function
             this.nasm.text(`call ${func_name}`)
-            // poping old arg registers
+            // pop up old arg registers
             for(let i = arg_registers.length-1; i >= 0; i--) {
                 this.nasm.text(`pop ${arg_registers[i]}`)
             }
+            this.nasm.text(`; ------ funccall end -> ${func_name}`)
         }
         else {
             throw new Error("Arguments count > 6")

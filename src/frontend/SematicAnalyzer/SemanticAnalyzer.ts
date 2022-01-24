@@ -1,4 +1,4 @@
-import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode } from 'frontend/AST/AST';
+import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from 'frontend/AST/AST';
 import { INodeVisitor } from 'frontend/AST/INodeVisitor';
 import { SymbolManager } from 'frontend/SymbolManager';
 
@@ -30,6 +30,9 @@ export class SemanticAnalyzer implements INodeVisitor {
     }
     visit_LiteralNode(node: LiteralNode): void {
        
+    }
+    visit_VarDeclStmNode(node: VarDeclStmNode): void {
+        this.visit(node.init_value)
     }
     visit_VarNode(node: VarNode): void {
        

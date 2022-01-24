@@ -5,7 +5,6 @@ export abstract class AstNode {
 }
 
 export abstract class AstStatementNode extends AstNode {}
-export class TypeNode extends AstNode {}
 
 export class BlockStmNode extends AstStatementNode {
     children: AstStatementNode[]
@@ -20,6 +19,12 @@ export class ProgramNode extends AstNode {
     constructor(body: BlockStmNode) {
         super()
         this.body = body
+    }
+}
+export class TypeNode extends AstNode {
+    constructor(token: Token) {
+        super()
+        this.token = token
     }
 }
 
@@ -37,6 +42,18 @@ export class LiteralNode extends AstNode {
     constructor(token: Token) {
         super()
         this.token = token
+    }
+}
+
+export class VarDeclStmNode extends AstStatementNode {
+    var_name: string
+    type: TypeNode
+    init_value: AstNode
+    constructor(var_name: string, type: TypeNode, init_value: any) {
+        super()
+        this.var_name = var_name
+        this.type = type
+        this.init_value = init_value
     }
 }
 
