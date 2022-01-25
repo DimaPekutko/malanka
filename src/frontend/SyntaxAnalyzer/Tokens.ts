@@ -29,13 +29,20 @@ export abstract class TOKEN_TYPES {
     static "rpar" = new TokenType("rpar", "\\)")
     static "comma" = new TokenType("comma", "\\,")
     // operations
+    static "and_op" = new TokenType("and_op", "\\and")    
+    static "or_op" = new TokenType("or_op", "\\or")
+    static "equal_op" = new TokenType("equal_op", "\\==")
+    static "greater_equal_op" = new TokenType("greater_equal_op", "\\>=")
+    static "greater_op" = new TokenType("greater_op", "\\>")
+    static "less_equal_op" = new TokenType("less_equal_op", "\\<=")
+    static "less_op" = new TokenType("less_op", "\\<")
+
     static "plus_op" = new TokenType("plus_op", "\\+")
     static "minus_op" = new TokenType("minus_op", "\\-")
     static "mul_op" = new TokenType("mul_op", "\\*")
     static "div_op" = new TokenType("div_op", "\\/")
     static "assign_op" = new TokenType("assign_op", "\\=")
-    static "and_op" = new TokenType("and_op", "\\and")
-    static "or_op" = new TokenType("or_op", "\\or")
+
     // marks
     static "block_start" = new TokenType("block_start", "\\:")
     static "func_decl_mark" = new TokenType("func_decl_mark", "\\.")

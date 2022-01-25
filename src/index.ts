@@ -23,10 +23,12 @@ const main = (): void => {
     const lexer = new Lexer(code)    
     const tokens = lexer.tokenize()
     // print_tokens(tokens)
+    // exit()
 
     const parser = new Parser(tokens)
     const ast = parser.parse()
     // dump(ast)
+    // exit()
 
     const symbol_manager = new SymbolManager()
     const semantic_analyzer = new SemanticAnalyzer(ast, symbol_manager)

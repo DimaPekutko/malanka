@@ -110,7 +110,7 @@ export class Parser {
         let name = this.current_token.value
         this.eat(TOKEN_TYPES.identifier)
         this.eat(TOKEN_TYPES.assign_op)
-        let value = this.parse_expr()
+        let value = this.parse_bin_expr()
         return new AssignStmNode(name, value)
     }
     private parse_vardecl(): VarDeclStmNode {
@@ -120,7 +120,7 @@ export class Parser {
         let type_name = this.current_token.value
         this.eat(TOKEN_TYPES.identifier)
         this.eat(TOKEN_TYPES.assign_op)
-        return new VarDeclStmNode(name, new TypeNode(type_name), this.parse_expr())
+        return new VarDeclStmNode(name, new TypeNode(type_name), this.parse_bin_expr())
     }
     private parse_funccall(): FuncCallStmNode {
         let name = this.current_token.value
@@ -133,28 +133,80 @@ export class Parser {
         this.eat(TOKEN_TYPES.lpar)
         while(this.current_token.type !== TOKEN_TYPES.rpar) {
             args.length !== 0 ? this.eat(TOKEN_TYPES.comma) : null
-            args.push(this.parse_expr())
+            args.push(this.parse_bin_expr())
         }
         this.eat(TOKEN_TYPES.rpar)
         return args
     }
     private parse_shared_import(): SharedImpStmNode {
         this.eat(TOKEN_TYPES.shared_import_key)
-        let dist = this.parse_factor()
+        let dist = this.current_token.value
+        this.eat(TOKEN_TYPES.string)
         return new SharedImpStmNode(dist)
+    }
+    private parse_bin_expr(): AstNode {
+        return this.parse_logic()
+    }
+    private parse_logic(): AstNode {
+        let node = this.parse_comparation()
+        let op = null
+        while(
+            this.current_token.type === TOKEN_TYPES.and_op ||
+            this.current_token.type === TOKEN_TYPES.or_op 
+        ) {
+            op = this.current_token;
+            if(op.type === TOKEN_TYPES.and_op) {
+                this.eat(TOKEN_TYPES.and_op)
+            }
+            else if(op.type === TOKEN_TYPES.or_op) {
+                this.eat(TOKEN_TYPES.or_op)
+            }
+            node = new BinOpNode(node, op, this.parse_comparation())
+        }
+        return node
+    }
+    private parse_comparation(): AstNode {
+        let node = this.parse_expr()
+        let op = null
+        while(
+            this.current_token.type === TOKEN_TYPES.greater_equal_op ||
+            this.current_token.type === TOKEN_TYPES.greater_op ||
+            this.current_token.type === TOKEN_TYPES.less_equal_op ||
+            this.current_token.type === TOKEN_TYPES.less_op ||
+            this.current_token.type === TOKEN_TYPES.equal_op
+        ) {
+            op = this.current_token;
+            if(op.type === TOKEN_TYPES.greater_equal_op) {
+                this.eat(TOKEN_TYPES.greater_equal_op)
+            }
+            else if(op.type === TOKEN_TYPES.greater_op) {
+                this.eat(TOKEN_TYPES.greater_op)
+            }
+            else if(op.type === TOKEN_TYPES.less_equal_op) {
+                this.eat(TOKEN_TYPES.less_equal_op)
+            }
+            else if(op.type === TOKEN_TYPES.less_op) {
+                this.eat(TOKEN_TYPES.less_op)
+            }
+            else if(op.type === TOKEN_TYPES.equal_op) {
+                this.eat(TOKEN_TYPES.equal_op)
+            }
+            node = new BinOpNode(node, op, this.parse_expr())
+        }
+        return node
     }
     private parse_expr(): AstNode {
         let node = this.parse_term()
         let op = null
         while(
             this.current_token.type === TOKEN_TYPES.plus_op ||
-            this.current_token.type === TOKEN_TYPES.minus_op
+            this.current_token.type === TOKEN_TYPES.minus_op 
         ) {
             op = this.current_token;
-            if(this.current_token.type === TOKEN_TYPES.plus_op) {
+            if(op.type === TOKEN_TYPES.plus_op) {
                 this.eat(TOKEN_TYPES.plus_op)
             }
-            else {
+            else if(op.type === TOKEN_TYPES.minus_op) {
                 this.eat(TOKEN_TYPES.minus_op)
             }
             node = new BinOpNode(node, op, this.parse_term())
@@ -169,10 +221,10 @@ export class Parser {
             this.current_token.type === TOKEN_TYPES.div_op
         ) {
             op = this.current_token;
-            if(this.current_token.type === TOKEN_TYPES.mul_op) {
+            if(op.type === TOKEN_TYPES.mul_op) {
                 this.eat(TOKEN_TYPES.mul_op)
             }
-            else {
+            else if(op.type === TOKEN_TYPES.div_op) {
                 this.eat(TOKEN_TYPES.div_op)
             }
             node = new BinOpNode(node, op, this.parse_factor())
@@ -215,7 +267,7 @@ export class Parser {
         }
         else if(this.current_token.type === TOKEN_TYPES.lpar) {
             this.eat(TOKEN_TYPES.lpar)
-            node = this.parse_expr();
+            node = this.parse_bin_expr();
             this.eat(TOKEN_TYPES.rpar)
             return node
         }

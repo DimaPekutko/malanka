@@ -12,20 +12,24 @@ import { TOKEN_TYPES } from "frontend/SyntaxAnalyzer/Tokens";
 
 
 class NasmWriter {
+    private _extern: string = ``
     private _text: string = `segment .text\nglobal _start\n_start:`
     private _bss: string = `segment .bss`
     private _data: string = `segment .data`
-    data(source: string): void {
-        this._data += ("\n\t"+source)
-    }
-    bss(source: string): void {
-        this._bss += ("\n\t"+source)
+    extern(source: string): void {
+        this._extern += ("\n\t"+source)
     }
     text(source: string): void {
         this._text += ("\n\t"+source)
     }
+    bss(source: string): void {
+        this._bss += ("\n\t"+source)
+    }
+    data(source: string): void {
+        this._data += ("\n\t"+source)
+    }
     get_source(): string {
-        return this._text+"\n\n"+this._bss+"\n"+this._data
+        return this._extern+"\n"+this._text+"\n"+this._bss+"\n"+this._data
     }
 }
 
@@ -44,12 +48,17 @@ export class Linux_x86_64 implements INodeVisitor {
         let global_symbols = this.symbol_manager.GLOBAL_SCOPE.symbols
         global_symbols.forEach(symbol => {
             if (symbol.IS_EXTERNAL) {
-                this.nasm.text(`extern ${symbol.name}`)
+                this.nasm.extern(`extern ${symbol.name}`)
             }
         })
     }
+    fill_system_constants(): void {
+        this.nasm.data("TRUE equ 1")
+        this.nasm.data("FALSE equ 0")
+    }
     visit_ProgramNode(node: ProgramNode): void {
         this.fill_extern_symbols()
+        this.fill_system_constants()
         this.visit(node.body)
     }
     visit_BlockStmNode(node: BlockStmNode): void {

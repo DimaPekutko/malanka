@@ -133,7 +133,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         })
     }
     visit_SharedImpStmNode(node: SharedImpStmNode): void {
-        this.symbol_manager.load_shared_symbols(node.str.token.value)
+        this.symbol_manager.load_shared_symbols(node.str)
     }
     visit_EOFStmNode(node: EOFStmNode): void {
         

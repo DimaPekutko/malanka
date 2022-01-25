@@ -1,6 +1,4 @@
-segment .text
-global _start
-_start:
+
 	extern putwchar
 	extern setrpcen
 	extern epoll_cr
@@ -1300,39 +1298,33 @@ _start:
 	extern vwarn
 	extern fts64_clo
 	extern wcpcpy
+segment .text
+global _start
+_start:
+	; arithmetic op
+	; arithmetic op
+	mov rax, 1
+	push rax
 	; arithmetic op
 	mov rax, 2
 	push rax
-	mov rax, 32
+	mov rax, 3
 	mov rbx, rax
 	pop rax
-	imul rbx
+	add rax, rbx
+	mov rbx, rax
+	pop rax
+	push rax
+	mov rax, 4
+	mov rbx, rax
+	pop rax
 	mov [a], rax
-	; ------ funccall -> printf
-	push rdi
-	push rsi
-	push rdx
-	push rcx
-	push r8
-	push r9
-	mov rax, str_Irwm5U6MR9
-	mov rdi, rax
-	mov rax, [a]
-	mov rsi, rax
-	call printf
-	pop r9
-	pop r8
-	pop rcx
-	pop rdx
-	pop rsi
-	pop rdi
-	; ------ funccall end -> printf
 	; exit
 	mov rax, 60
 	xor rdi, rdi
 	syscall
-
 segment .bss
 	a resb 8
 segment .data
-	str_Irwm5U6MR9 db "%d",0xa,0
+	TRUE equ 1
+	FALSE equ 0

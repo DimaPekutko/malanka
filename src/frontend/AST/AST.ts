@@ -98,8 +98,8 @@ export class FuncCallStmNode extends AstStatementNode {
 }
 
 export class SharedImpStmNode extends AstStatementNode {
-    str: LiteralNode
-    constructor(str: LiteralNode) {
+    str: string
+    constructor(str: string) {
         super()
         this.str = str
     }
