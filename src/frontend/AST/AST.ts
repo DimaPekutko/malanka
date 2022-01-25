@@ -22,9 +22,10 @@ export class ProgramNode extends AstNode {
     }
 }
 export class TypeNode extends AstNode {
-    constructor(token: Token) {
+    name: string
+    constructor(name: string) {
         super()
-        this.token = token
+        this.name = name
     }
 }
 
@@ -39,6 +40,7 @@ export class AssignStmNode extends AstStatementNode {
 }
 
 export class LiteralNode extends AstNode {
+    type!: TypeNode  // should be specifyed in semantic analyzer
     constructor(token: Token) {
         super()
         this.token = token

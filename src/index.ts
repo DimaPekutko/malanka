@@ -31,6 +31,7 @@ const main = (): void => {
     const symbol_manager = new SymbolManager()
     const semantic_analyzer = new SemanticAnalyzer(ast, symbol_manager)
     semantic_analyzer.analyze()
+    // dump(ast)
 
     let compiler = new Linux_x86_64(ast, symbol_manager, "./tmp/test")
     compiler.compile();

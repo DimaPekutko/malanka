@@ -1303,18 +1303,10 @@ _start:
 	; arithmetic op
 	mov rax, 2
 	push rax
-	mov rax, 3
+	mov rax, 32
 	mov rbx, rax
 	pop rax
-	add rax, rbx
-	mov [a], rax
-	; arithmetic op
-	mov rax, [a]
-	push rax
-	mov rax, 1
-	mov rbx, rax
-	pop rax
-	add rax, rbx
+	imul rbx
 	mov [a], rax
 	; ------ funccall -> printf
 	push rdi
@@ -1323,7 +1315,7 @@ _start:
 	push rcx
 	push r8
 	push r9
-	mov rax, str_qb6YAW9Aun
+	mov rax, str_Irwm5U6MR9
 	mov rdi, rax
 	mov rax, [a]
 	mov rsi, rax
@@ -1343,4 +1335,4 @@ _start:
 segment .bss
 	a resb 8
 segment .data
-	str_qb6YAW9Aun db "hello, a=%d",0xa,0
+	str_Irwm5U6MR9 db "%d",0xa,0

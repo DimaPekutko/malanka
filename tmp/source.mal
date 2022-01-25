@@ -1,7 +1,5 @@
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
+a @int = 2*32
 
-a @str = 2 + 3
-a = a+1
-
-printf("hello, a=%d", a)
+printf("%d", a)

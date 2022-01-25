@@ -23,6 +23,14 @@ export class FuncSymbol extends Symbol {
     }
 }
 
+export class TypeSymbol extends Symbol {
+    type_name: string
+    constructor(type_name: string) {
+        super()
+        this.type_name = type_name
+    }
+}
+
 export class SymbolTable {
     readonly symbols: Map<string, Symbol>
     readonly name: string
