@@ -16,11 +16,20 @@ class NasmWriter {
     private _text: string = `segment .text\nglobal _start\n_start:`
     private _bss: string = `segment .bss`
     private _data: string = `segment .data`
+    private _label_counter: number = 0
     extern(source: string): void {
         this._extern += ("\n\t"+source)
     }
     text(source: string): void {
         this._text += ("\n\t"+source)
+    }
+    gen_label(label: string): string {
+        let new_label = (label +"__"+ uid(5) +"___" + this._label_counter)
+        this._label_counter++
+        return new_label
+    }
+    add_label (label: string): void {
+        this._text += ("\n"+label+":")
     }
     bss(source: string): void {
         this._bss += ("\n\t"+source)
@@ -53,8 +62,8 @@ export class Linux_x86_64 implements INodeVisitor {
         })
     }
     fill_system_constants(): void {
-        this.nasm.data("TRUE equ 1")
-        this.nasm.data("FALSE equ 0")
+        this.nasm.data("TRUE db 1")
+        this.nasm.data("FALSE db 0")
     }
     visit_ProgramNode(node: ProgramNode): void {
         this.fill_extern_symbols()
@@ -72,25 +81,69 @@ export class Linux_x86_64 implements INodeVisitor {
         this.nasm.text(`mov [${var_name}], rax`)
     }
     visit_BinOpNode(node: BinOpNode): void {
-        this.nasm.text(`; arithmetic op`)
+        this.nasm.add_label(this.nasm.gen_label("BINOP_START"))
+
         this.visit(node.left)   // generate 'mov rax, l_operand'
         this.nasm.text(`push rax`)
         this.visit(node.right)  // generate 'mov rax, r_operand'
         this.nasm.text(`mov rbx, rax`)
         this.nasm.text(`pop rax`)
-        if (node.token.type === TOKEN_TYPES.plus_op) {
+
+        // left operand in rax, right in rbx
+
+        let op_type = node.token.type
+
+        if (op_type === TOKEN_TYPES.plus_op) {
             this.nasm.text(`add rax, rbx`)
         }
-        else if (node.token.type === TOKEN_TYPES.minus_op) {
+        else if (op_type === TOKEN_TYPES.minus_op) {
             this.nasm.text(`sub rax, rbx`)
         }
-        else if (node.token.type === TOKEN_TYPES.mul_op) {
+        else if (op_type === TOKEN_TYPES.mul_op) {
             this.nasm.text(`imul rbx`)
         }
-        else if (node.token.type === TOKEN_TYPES.div_op) {
+        else if (op_type === TOKEN_TYPES.div_op) {
             this.nasm.text(`idiv rbx`)
             // this.nasm.text(`mov rax, rdx`)
         }
+        // logical ops
+        else if (op_type === TOKEN_TYPES.and_op) {
+            this.nasm.text(`and rax, rbx`)
+        }
+        else if (op_type === TOKEN_TYPES.or_op) {
+            this.nasm.text(`or rax, rbx`)
+        }
+        // comparation ops case
+        else {
+            let comp_start_label = this.nasm.gen_label("COMP_START")
+            let right_comp_label = this.nasm.gen_label("COMP_RIGHT")
+            let wrong_comp_label = this.nasm.gen_label("COMP_WRONG")
+            let comp_end_label = this.nasm.gen_label("COMP_END")
+            this.nasm.add_label(comp_start_label)
+            this.nasm.text("cmp rax, rbx")
+            if(op_type === TOKEN_TYPES.greater_equal_op) {
+                this.nasm.text(`jge ${right_comp_label}`)
+            }
+            else if(op_type === TOKEN_TYPES.greater_op) {
+                this.nasm.text(`jg ${right_comp_label}`)
+            }
+            else if(op_type === TOKEN_TYPES.less_equal_op) {
+                this.nasm.text(`jle ${right_comp_label}`)
+            }
+            else if(op_type === TOKEN_TYPES.less_op) {
+                this.nasm.text(`jl ${right_comp_label}`)
+            }
+            else if(op_type === TOKEN_TYPES.equal_op) {
+                this.nasm.text(`je ${right_comp_label}`)
+            }
+            this.nasm.add_label(wrong_comp_label)
+            this.nasm.text(`xor rax, rax`)
+            this.nasm.text(`jmp ${comp_end_label}`)
+            this.nasm.add_label(right_comp_label)
+            this.nasm.text(`mov rax, 1`)
+            this.nasm.add_label(comp_end_label)
+        }
+        this.nasm.add_label(this.nasm.gen_label("BINOP_END"))
     }
     visit_UnOpNode(node: UnOpNode): void {
         this.visit(node.left)
@@ -215,9 +268,6 @@ export class Linux_x86_64 implements INodeVisitor {
         catch (err) {
             LogManager.error("Linking failed.", "Linux_x86_64.ts")
         }
-    }
-    private run_binary(): void {
-        execSync(`./${this.output_filename}`)
     }
     private find_ld_linker_path(): string {
         let output = execSync("ls /lib64 | grep ld-linux-x86-64.so")

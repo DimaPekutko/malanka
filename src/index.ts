@@ -13,7 +13,7 @@ import { SymbolManager } from 'frontend/SymbolManager';
 
 const print_tokens = (tokens: Token[]): void => {
     tokens.forEach(token => {
-        console.log(token.type.name, token.value)
+        console.log(token.type.name)
     })
 }
 

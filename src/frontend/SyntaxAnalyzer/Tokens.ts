@@ -28,6 +28,7 @@ export abstract class TOKEN_TYPES {
     static "lpar" = new TokenType("lpar", "\\(")
     static "rpar" = new TokenType("rpar", "\\)")
     static "comma" = new TokenType("comma", "\\,")
+    static "comment" = new TokenType("comment", "\\//")
     // operations
     static "and_op" = new TokenType("and_op", "\\and")    
     static "or_op" = new TokenType("or_op", "\\or")

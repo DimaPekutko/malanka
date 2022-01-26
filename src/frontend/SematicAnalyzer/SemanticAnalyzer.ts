@@ -110,9 +110,6 @@ export class SemanticAnalyzer implements INodeVisitor {
         let var_name = node.name
         let defined_var = this.symbol_manager.GLOBAL_SCOPE.get(var_name)
         if (!(defined_var instanceof VarSymbol)) {
-        //     this.eat_type(defined_var.type)
-        // }
-        // else {
             LogManager.error(
                 `Symbol '${var_name}' did not declared.`,
                 "SemanticAnalyzer.ts"
@@ -129,6 +126,7 @@ export class SemanticAnalyzer implements INodeVisitor {
             )
         }
         args.forEach(arg => {
+            this.eat_type(null)
             this.visit(arg)
         })
     }
@@ -141,6 +139,7 @@ export class SemanticAnalyzer implements INodeVisitor {
     visit(node: AstNode): any {
         // It's dirty, but there are no need to write a complex if else structure
         let visit_method = "this.visit_"+node.constructor.name+"(node)"
+        // LogManager.log(`Visiting ${visit_method}`, "SemanticAnalyzer.ts")
         return eval(visit_method)
     }
     analyze(): void {

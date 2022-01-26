@@ -8,6 +8,7 @@ export class Lexer {
     row: number = 1
     col: number = 1
     pos: number = 0
+    is_comment_now: boolean = false
     constructor(code: string) {
         this.code = code
     }
@@ -47,12 +48,18 @@ export class Lexer {
             if(match !== null && match.index === 0 && match[0].length > 0) {
                 this.pos += match[0].length
                 this.col += match[0].length                  
+                // comment case
+                if (token_types[i][1] === TOKEN_TYPES.comment) {
+                    this.is_comment_now = true
+                }
                 // just token
-                if(token_types[i][1] !== TOKEN_TYPES.string_quote) {
-                    this.tokens.push(new Token(token_types[i][1],match[0],this.row,this.col))
+                else if(token_types[i][1] !== TOKEN_TYPES.string_quote) {
+                    if (!this.is_comment_now)
+                        this.tokens.push(new Token(token_types[i][1],match[0],this.row,this.col))
                     if(token_types[i][1] === TOKEN_TYPES.new_line) {
                         this.col = 1
                         this.row++
+                        this.is_comment_now = false
                     }
                 }
                 // string case
@@ -69,8 +76,8 @@ export class Lexer {
                         this.col++
                         match = char.match(regex)
                     }
-
-                    this.tokens.push(new Token(TOKEN_TYPES.string, str_value, str_row, str_col))
+                    if (!this.is_comment_now)
+                        this.tokens.push(new Token(TOKEN_TYPES.string, str_value, str_row, str_col))
                 }
                 return
             }

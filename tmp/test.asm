@@ -1301,30 +1301,82 @@
 segment .text
 global _start
 _start:
-	; arithmetic op
-	; arithmetic op
-	mov rax, 1
-	push rax
-	; arithmetic op
-	mov rax, 2
+	; ------ funccall -> printf
+	push rdi
+	push rsi
+	push rdx
+	push rcx
+	push r8
+	push r9
+	mov rax, str_f4rUoGYZvE
+	mov rdi, rax
+BINOP_START__Synwp___0:
+BINOP_START__GetQR___1:
+BINOP_START__ajN6S___2:
+	mov rax, 3
 	push rax
 	mov rax, 3
 	mov rbx, rax
 	pop rax
-	add rax, rbx
+COMP_START__7GQfr___3:
+	cmp rax, rbx
+	jge COMP_RIGHT__dVWdn___4
+COMP_WRONG__fBqKX___5:
+	xor rax, rax
+	jmp COMP_END__R6NTZ___6
+COMP_RIGHT__dVWdn___4:
+	mov rax, 1
+COMP_END__R6NTZ___6:
+BINOP_END__fp88B___7:
+	push rax
+	mov rax, 0
 	mov rbx, rax
 	pop rax
+	or rax, rbx
+BINOP_END__wW0oD___8:
+	push rax
+BINOP_START__fRvhO___9:
+BINOP_START__BV0Wv___10:
+	mov rax, 23
 	push rax
 	mov rax, 4
 	mov rbx, rax
 	pop rax
-	mov [a], rax
+	add rax, rbx
+BINOP_END__S5623___11:
+	push rax
+	mov rax, 26
+	mov rbx, rax
+	pop rax
+COMP_START__5mfJR___12:
+	cmp rax, rbx
+	jg COMP_RIGHT__Rn6DX___13
+COMP_WRONG__qHfSL___14:
+	xor rax, rax
+	jmp COMP_END__vOBz4___15
+COMP_RIGHT__Rn6DX___13:
+	mov rax, 1
+COMP_END__vOBz4___15:
+BINOP_END__Dwaxi___16:
+	mov rbx, rax
+	pop rax
+	and rax, rbx
+BINOP_END__Kwmmj___17:
+	mov rsi, rax
+	call printf
+	pop r9
+	pop r8
+	pop rcx
+	pop rdx
+	pop rsi
+	pop rdi
+	; ------ funccall end -> printf
 	; exit
 	mov rax, 60
 	xor rdi, rdi
 	syscall
 segment .bss
-	a resb 8
 segment .data
-	TRUE equ 1
-	FALSE equ 0
+	TRUE db 1
+	FALSE db 0
+	str_f4rUoGYZvE db "%d",0xa,0
