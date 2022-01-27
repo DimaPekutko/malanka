@@ -64,7 +64,7 @@ a = a * 2
 // if else example
 if a == 10 and 3 < 4:
     printf("okay")
-elif 22 or a > 10 :
+elif 22 or a > 10:
     printf("hmm... that is elif")
 else:
     printf("else case")
