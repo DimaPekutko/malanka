@@ -44,8 +44,8 @@ What is currently available:
 - [x] Data types: ```@int, @doub ```
 - [x] Varaibles ```a @type = ...```
 - [x] Complex expressions ```-((2*3/21+--3)-((32/6)*365))```
-- [x] Conditions ```if 2>3: printf("hello") end```
-- [x] For loops
+- [x] Conditions ```if 2>3: //body end```
+- [x] For loops ```for i @int=0; i < 10; i++: //body end```
 - [ ] Arrays
 - [ ] Functions
 - [ ] Symbol scopes
