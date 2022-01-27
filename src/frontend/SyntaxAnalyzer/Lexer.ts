@@ -17,7 +17,7 @@ export class Lexer {
             // console.log(this.pos, this.code.length)
             this.parse_token()
         }
-        this.replace_spaces_with_tabs()
+        // this.replace_spaces_with_tabs()
         this.tokens.push(new Token(TOKEN_TYPES.EOF,"EOF",this.row,this.col))
         return this.tokens.filter(token => token.type.name !== TOKEN_TYPES.space.name);
     }

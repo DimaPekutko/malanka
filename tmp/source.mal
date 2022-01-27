@@ -1,3 +1,14 @@
-dynamic "/lib/x86_64-linux-gnu/libc.so.6"
+dynamic "/lib/x86_64-linux-gnu/libc.so.6"    
+//printf("%d", (3 >= 3 or 0) and 23 + 4 > 26)
 
-printf("%d", (3 >= 3 or 0) and 23 + 4 > 26)
+a @int = 1
+
+if (1 < 2) and a and (0 == 0):
+    printf("if true")
+elif 3 > 3:
+    printf("elif true")
+else:
+    printf("else true")
+end
+
+printf("hello, a=%d", a)

@@ -1,4 +1,5 @@
-import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode } from './../AST/AST';
+import { dump } from './../../utils';
+import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode } from './../AST/AST';
 import { AstNode, BinOpNode, LiteralNode, UnOpNode } from "frontend/AST/AST"
 import { Token, TokenType, TOKEN_TYPES } from './Tokens'
 import { exit, LogManager } from 'utils';
@@ -7,6 +8,7 @@ import { exit, LogManager } from 'utils';
 export class Parser {
     private tokens: Token[]
     private current_token!: Token
+    private TABS_COUNT = 0
     constructor(tokens: Token[]) {
         this.tokens = tokens
         this.get_next_token()
@@ -23,27 +25,36 @@ export class Parser {
             this.get_next_token()
         }
     }
+    private skip_new_lines(): void {
+        while(this.current_token.type === TOKEN_TYPES.new_line) {
+            this.get_next_token()
+        }
+    }
+    private skip_tabs(): number {
+        let count = 0
+        while(this.current_token.type === TOKEN_TYPES.tab) {
+            this.get_next_token()
+            count++
+        }
+        return count
+    }
     private eat(type: TokenType): void {
-        if(type !== TOKEN_TYPES.new_line && type !== TOKEN_TYPES.tab) { 
-            this.skip_gaps()
-        }
-        else if(type === TOKEN_TYPES.new_line) {
-            while(this.current_token.type === TOKEN_TYPES.tab) {
-                this.get_next_token()
-            }
-        }
-        else if(type === TOKEN_TYPES.tab) {
-            while(this.current_token.type === TOKEN_TYPES.new_line) {
-                this.get_next_token()
-            }
-        }
+        // if(type !== TOKEN_TYPES.new_line && type !== TOKEN_TYPES.tab) { 
+        //     this.skip_gaps()
+        // }
+        // else if(type === TOKEN_TYPES.new_line) {
+        //     this.skip_new_lines()
+        // }
+        // else if(type === TOKEN_TYPES.tab) {
+        //     this.skip_tabs()
+        // }
         
         if(this.current_token.type.name === type.name) {
             this.get_next_token()
         }
         else {
             LogManager.error(
-                `Unexpected token ${this.current_token.value} but required ${type.name} token type in ${this.current_token.row}:${this.current_token.col}.`,
+                `Unexpected token '${this.current_token.value}' but required ${type.name} token type in ${this.current_token.row}:${this.current_token.col}.`,
                 "Parser.ts"
             )
         }
@@ -51,32 +62,56 @@ export class Parser {
     private peek(): Token {
         return this.tokens[0]
     }
-    private parse_program(): ProgramNode {
+    private parse_stm_list(is_program_block: boolean = false): AstStatementNode[] {
         let statements: AstStatementNode[] = []
-        while(true) {
-            let stm = this.parse_stm()
-            statements.push(stm)
-            if (stm instanceof EOFStmNode) break
-            if(this.current_token.type !== TOKEN_TYPES.EOF) {
-                this.eat(TOKEN_TYPES.new_line)
+        let stm!: AstStatementNode
+
+        // program scope parsing
+        if (is_program_block) {
+            while (!(stm instanceof EOFStmNode)) {
+                this.skip_gaps()
+                stm = this.parse_stm()
+                statements.push(stm)
+                if (this.current_token.type !== TOKEN_TYPES.EOF && 
+                    !(stm instanceof IfStmNode)
+                ) {
+                    this.eat(TOKEN_TYPES.new_line)
+                    this.skip_new_lines()
+                }
             }
         }
+        // just regular block parsing
+        else {
+            this.skip_gaps()
+            while (
+                this.current_token.type !== TOKEN_TYPES.end_key &&
+                this.current_token.type !== TOKEN_TYPES.elif &&
+                this.current_token.type !== TOKEN_TYPES.else
+            ) {
+                stm = this.parse_stm()
+                statements.push(stm)
+                if (this.current_token.type !== TOKEN_TYPES.end_key) {
+                    this.eat(TOKEN_TYPES.new_line)
+                }
+                this.skip_gaps()
+            }
+        }
+        return statements
+    } 
+    private parse_program(): ProgramNode {
+        let statements: AstStatementNode[] = this.parse_stm_list(true)
         return new ProgramNode(new BlockStmNode(statements))
     }
     private parse_block_stm(): BlockStmNode {
         this.eat(TOKEN_TYPES.block_start)
         this.eat(TOKEN_TYPES.new_line)
-        let statements: AstStatementNode[] = []
-        while(this.current_token.type === TOKEN_TYPES.tab) {
-            this.eat(TOKEN_TYPES.tab)
-            let stm = this.parse_stm()
-            statements.push(stm)
-            this.eat(TOKEN_TYPES.new_line)
+        let statements: AstStatementNode[] = this.parse_stm_list()
+        if (this.current_token.type !== TOKEN_TYPES.elif && this.current_token.type !== TOKEN_TYPES.else) {
+            this.eat(TOKEN_TYPES.end_key)
         }
         return new BlockStmNode(statements)
     }
-    private parse_stm(): AstStatementNode {
-        this.skip_gaps()
+    private parse_stm(): AstStatementNode {        
         if(this.current_token.type === TOKEN_TYPES.identifier) {
             let next_token = this.peek()
             // funccall case
@@ -91,6 +126,9 @@ export class Parser {
             else {
                 return this.parse_assignment()
             }
+        }
+        else if (this.current_token.type === TOKEN_TYPES.if) {
+            return this.parse_if()
         }
         else if (this.current_token.type === TOKEN_TYPES.shared_import_key) {
             return this.parse_shared_import()
@@ -137,6 +175,39 @@ export class Parser {
         }
         this.eat(TOKEN_TYPES.rpar)
         return args
+    }
+    private parse_if(): IfStmNode {
+        this.eat(TOKEN_TYPES.if)
+        let condition = this.parse_bin_expr()        
+        let body = this.parse_block_stm()
+        let node = new IfStmNode(condition, body) 
+        if (this.current_token.type === TOKEN_TYPES.elif) {
+            node.alternate = this.parse_elif()
+        }
+        else if (this.current_token.type === TOKEN_TYPES.else) {
+            node.alternate = this.parse_else()
+        }
+        return node
+    }
+    private parse_elif(): IfStmNode {
+        this.eat(TOKEN_TYPES.elif)
+        let condition = this.parse_bin_expr()
+        let body = this.parse_block_stm()
+        let node = new IfStmNode(condition, body)         
+        if (this.current_token.type === TOKEN_TYPES.elif) {
+            node.alternate = this.parse_elif()
+        }
+        else if (this.current_token.type === TOKEN_TYPES.else) {
+            node.alternate = this.parse_else()
+        }
+        return node
+    }
+    private parse_else(): IfStmNode {
+        this.eat(TOKEN_TYPES.else)
+        let condition = null
+        let body = this.parse_block_stm()
+        let node = new IfStmNode(condition, body) 
+        return node
     }
     private parse_shared_import(): SharedImpStmNode {
         this.eat(TOKEN_TYPES.shared_import_key)

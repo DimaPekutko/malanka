@@ -87,6 +87,17 @@ export class UnOpNode extends AstNode {
     }
 }
 
+export class IfStmNode extends AstNode {
+    condition: AstNode | null
+    body: BlockStmNode
+    alternate!: IfStmNode
+    constructor(condition: AstNode | null, body: BlockStmNode) {
+        super()
+        this.condition = condition
+        this.body = body
+    }
+}
+
 export class FuncCallStmNode extends AstStatementNode {
     func_name: string
     args: AstNode[]

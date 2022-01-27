@@ -4,7 +4,7 @@ import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 
-import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from "frontend/AST/AST";
+import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode } from "frontend/AST/AST";
 import { INodeVisitor } from "frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "frontend/SyntaxAnalyzer/Tokens";
 
@@ -17,6 +17,7 @@ class NasmWriter {
     private _bss: string = `segment .bss`
     private _data: string = `segment .data`
     private _label_counter: number = 0
+    buffer_label: string = ""
     extern(source: string): void {
         this._extern += ("\n\t"+source)
     }
@@ -92,7 +93,6 @@ export class Linux_x86_64 implements INodeVisitor {
         // left operand in rax, right in rbx
 
         let op_type = node.token.type
-
         if (op_type === TOKEN_TYPES.plus_op) {
             this.nasm.text(`add rax, rbx`)
         }
@@ -164,6 +164,39 @@ export class Linux_x86_64 implements INodeVisitor {
             this.nasm.data(`${str_name} db "${value}",0xa,0`)
             this.nasm.text(`mov rax, ${str_name}`)
         }
+    }
+    visit_IfStmNode(node: IfStmNode): void {
+        let start_label = this.nasm.gen_label("COND_START")
+        let if_label = this.nasm.gen_label("IF_START")
+        let if_end_label = this.nasm.gen_label("IF_END")
+        let end_label = this.nasm.buffer_label
+        if (end_label.length < 1) {
+            end_label = this.nasm.gen_label("COND_END")
+            this.nasm.buffer_label = end_label
+        }
+
+        // let else_label = this.nasm.gen_label("ELSE")
+        this.nasm.add_label(start_label)
+        if (node.condition !== null) {
+            this.visit(node.condition) // generate 'mov rax, condition_result'
+        }
+        else {
+            this.nasm.text(`mov rax, 1`)
+        }
+        this.nasm.text(`test rax, rax`)
+        this.nasm.text(`jz ${if_end_label}`)
+        this.nasm.add_label(if_label)
+        this.visit(node.body) // generate if body
+        this.nasm.text(`jmp ${end_label}`)
+        this.nasm.add_label(if_end_label)
+
+        if (node.alternate !== undefined) {
+            this.visit(node.alternate)
+        }
+        else {
+            this.nasm.add_label(end_label)
+        }
+
     }
     visit_VarDeclStmNode(node: VarDeclStmNode): void {
         let var_name: string = node.var_name

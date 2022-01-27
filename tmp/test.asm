@@ -1301,6 +1301,57 @@
 segment .text
 global _start
 _start:
+	mov rax, 1
+	mov [a], rax
+COND_START__XkJZC___0:
+BINOP_START__nqLhI___4:
+BINOP_START__IZQft___5:
+BINOP_START__iIrSV___6:
+	mov rax, 1
+	push rax
+	mov rax, 2
+	mov rbx, rax
+	pop rax
+COMP_START__btgaF___7:
+	cmp rax, rbx
+	jl COMP_RIGHT__bETRl___8
+COMP_WRONG__DsJeg___9:
+	xor rax, rax
+	jmp COMP_END__9YB6U___10
+COMP_RIGHT__bETRl___8:
+	mov rax, 1
+COMP_END__9YB6U___10:
+BINOP_END__qqX9a___11:
+	push rax
+	mov rax, [a]
+	mov rbx, rax
+	pop rax
+	and rax, rbx
+BINOP_END__ja4QM___12:
+	push rax
+BINOP_START__RvJvZ___13:
+	mov rax, 0
+	push rax
+	mov rax, 0
+	mov rbx, rax
+	pop rax
+COMP_START__HfQXF___14:
+	cmp rax, rbx
+	je COMP_RIGHT__D1IoU___15
+COMP_WRONG__6qHdj___16:
+	xor rax, rax
+	jmp COMP_END__xbxo5___17
+COMP_RIGHT__D1IoU___15:
+	mov rax, 1
+COMP_END__xbxo5___17:
+BINOP_END__VsURJ___18:
+	mov rbx, rax
+	pop rax
+	and rax, rbx
+BINOP_END__v5nBm___19:
+	test rax, rax
+	jz IF_END__OEBaA___2
+IF_START__1zYeE___1:
 	; ------ funccall -> printf
 	push rdi
 	push rsi
@@ -1308,60 +1359,92 @@ _start:
 	push rcx
 	push r8
 	push r9
-	mov rax, str_f4rUoGYZvE
+	mov rax, str_9qa0V2TS9V
 	mov rdi, rax
-BINOP_START__Synwp___0:
-BINOP_START__GetQR___1:
-BINOP_START__ajN6S___2:
+	call printf
+	pop r9
+	pop r8
+	pop rcx
+	pop rdx
+	pop rsi
+	pop rdi
+	; ------ funccall end -> printf
+	jmp COND_END__VPQSn___3
+IF_END__OEBaA___2:
+COND_START__8l9Wf___20:
+BINOP_START__azgJI___23:
 	mov rax, 3
 	push rax
 	mov rax, 3
 	mov rbx, rax
 	pop rax
-COMP_START__7GQfr___3:
+COMP_START__wqHj5___24:
 	cmp rax, rbx
-	jge COMP_RIGHT__dVWdn___4
-COMP_WRONG__fBqKX___5:
+	jg COMP_RIGHT__MIWb8___25
+COMP_WRONG__8Z0hD___26:
 	xor rax, rax
-	jmp COMP_END__R6NTZ___6
-COMP_RIGHT__dVWdn___4:
+	jmp COMP_END__qB1Nf___27
+COMP_RIGHT__MIWb8___25:
 	mov rax, 1
-COMP_END__R6NTZ___6:
-BINOP_END__fp88B___7:
-	push rax
-	mov rax, 0
-	mov rbx, rax
-	pop rax
-	or rax, rbx
-BINOP_END__wW0oD___8:
-	push rax
-BINOP_START__fRvhO___9:
-BINOP_START__BV0Wv___10:
-	mov rax, 23
-	push rax
-	mov rax, 4
-	mov rbx, rax
-	pop rax
-	add rax, rbx
-BINOP_END__S5623___11:
-	push rax
-	mov rax, 26
-	mov rbx, rax
-	pop rax
-COMP_START__5mfJR___12:
-	cmp rax, rbx
-	jg COMP_RIGHT__Rn6DX___13
-COMP_WRONG__qHfSL___14:
-	xor rax, rax
-	jmp COMP_END__vOBz4___15
-COMP_RIGHT__Rn6DX___13:
+COMP_END__qB1Nf___27:
+BINOP_END__jrR0Y___28:
+	test rax, rax
+	jz IF_END__Vj0KR___22
+IF_START__jB5n5___21:
+	; ------ funccall -> printf
+	push rdi
+	push rsi
+	push rdx
+	push rcx
+	push r8
+	push r9
+	mov rax, str_JWVxantrLf
+	mov rdi, rax
+	call printf
+	pop r9
+	pop r8
+	pop rcx
+	pop rdx
+	pop rsi
+	pop rdi
+	; ------ funccall end -> printf
+	jmp COND_END__VPQSn___3
+IF_END__Vj0KR___22:
+COND_START__0ZyEr___29:
 	mov rax, 1
-COMP_END__vOBz4___15:
-BINOP_END__Dwaxi___16:
-	mov rbx, rax
-	pop rax
-	and rax, rbx
-BINOP_END__Kwmmj___17:
+	test rax, rax
+	jz IF_END__K7Nna___31
+IF_START__5K9MR___30:
+	; ------ funccall -> printf
+	push rdi
+	push rsi
+	push rdx
+	push rcx
+	push r8
+	push r9
+	mov rax, str_1zytmQSnAF
+	mov rdi, rax
+	call printf
+	pop r9
+	pop r8
+	pop rcx
+	pop rdx
+	pop rsi
+	pop rdi
+	; ------ funccall end -> printf
+	jmp COND_END__VPQSn___3
+IF_END__K7Nna___31:
+COND_END__VPQSn___3:
+	; ------ funccall -> printf
+	push rdi
+	push rsi
+	push rdx
+	push rcx
+	push r8
+	push r9
+	mov rax, str_sMbZBXb8nF
+	mov rdi, rax
+	mov rax, [a]
 	mov rsi, rax
 	call printf
 	pop r9
@@ -1376,7 +1459,11 @@ BINOP_END__Kwmmj___17:
 	xor rdi, rdi
 	syscall
 segment .bss
+	a resb 8
 segment .data
 	TRUE db 1
 	FALSE db 0
-	str_f4rUoGYZvE db "%d",0xa,0
+	str_9qa0V2TS9V db "if true",0xa,0
+	str_JWVxantrLf db "elif true",0xa,0
+	str_1zytmQSnAF db "else true",0xa,0
+	str_sMbZBXb8nF db "hello, a=%d",0xa,0

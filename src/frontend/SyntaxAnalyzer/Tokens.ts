@@ -37,21 +37,24 @@ export abstract class TOKEN_TYPES {
     static "greater_op" = new TokenType("greater_op", "\\>")
     static "less_equal_op" = new TokenType("less_equal_op", "\\<=")
     static "less_op" = new TokenType("less_op", "\\<")
-
     static "plus_op" = new TokenType("plus_op", "\\+")
     static "minus_op" = new TokenType("minus_op", "\\-")
     static "mul_op" = new TokenType("mul_op", "\\*")
     static "div_op" = new TokenType("div_op", "\\/")
     static "assign_op" = new TokenType("assign_op", "\\=")
-
     // marks
     static "block_start" = new TokenType("block_start", "\\:")
     static "func_decl_mark" = new TokenType("func_decl_mark", "\\.")
     static "func_params_mark" = new TokenType("func_params_mark", "\\#")
     static "type_mark" = new TokenType("type_mark", "\\@")
+    // conditions
+    static "if" = new TokenType("if", "\\if")
+    static "elif" = new TokenType("elif", "\\elif")
+    static "else" = new TokenType("else", "\\else")
     // imports
     static "shared_import_key" = new TokenType("shared_import_key", "dynamic")
     // general
+    static "end_key" = new TokenType("end_key", "\\end")
     static "number" = new TokenType("number","([0-9]*[.])?[0-9]+")
     static "identifier" = new TokenType("identifier", "([A-Za-z0-9\_]+)")
     // static "type_identifier" = new TokenType("type_identifier", "@([A-Za-z0-9\_]+)")
