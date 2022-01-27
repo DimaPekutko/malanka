@@ -45,9 +45,9 @@ What is currently available:
 - [x] Varaibles ```a @type = ...```
 - [x] Complex expressions ```-((2*3/21+--3)-((32/6)*365))```
 - [x] Conditions ```if 2>3: printf("hello") end```
-- [] For loops
-- [] Arrays
-- [] Functions
+- [ ] For loops
+- [ ] Arrays
+- [ ] Functions
 - [x] Dynamic imports ```dynamic "your_lib_path"```
 
 
