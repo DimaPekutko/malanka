@@ -28,6 +28,7 @@ export abstract class TOKEN_TYPES {
     static "lpar" = new TokenType("lpar", "\\(")
     static "rpar" = new TokenType("rpar", "\\)")
     static "comma" = new TokenType("comma", "\\,")
+    static "semicolon" = new TokenType("semicolon", "\\;")
     static "comment" = new TokenType("comment", "\\//")
     // operations
     static "and_op" = new TokenType("and_op", "\\and")    
@@ -48,9 +49,11 @@ export abstract class TOKEN_TYPES {
     static "func_params_mark" = new TokenType("func_params_mark", "\\#")
     static "type_mark" = new TokenType("type_mark", "\\@")
     // conditions
-    static "if" = new TokenType("if", "\\if")
-    static "elif" = new TokenType("elif", "\\elif")
-    static "else" = new TokenType("else", "\\else")
+    static "if" = new TokenType("if", "if")
+    static "elif" = new TokenType("elif", "elif")
+    static "else" = new TokenType("else", "else")
+    // loops
+    static "for" = new TokenType("for", "for")
     // imports
     static "shared_import_key" = new TokenType("shared_import_key", "dynamic")
     // general

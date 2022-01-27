@@ -45,9 +45,10 @@ What is currently available:
 - [x] Varaibles ```a @type = ...```
 - [x] Complex expressions ```-((2*3/21+--3)-((32/6)*365))```
 - [x] Conditions ```if 2>3: printf("hello") end```
-- [ ] For loops
+- [x] For loops
 - [ ] Arrays
 - [ ] Functions
+- [ ] Symbol scopes
 - [x] Dynamic imports ```dynamic "your_lib_path"```
 
 ## Example of all features
@@ -68,6 +69,11 @@ elif 22 or a > 10:
     printf("hmm... that is elif")
 else:
     printf("else case")
+end
+
+// for example
+for j @int = 0; j < 10; j = j + 1:
+    printf("loop me")
 end
 ```
 

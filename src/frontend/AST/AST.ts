@@ -87,13 +87,27 @@ export class UnOpNode extends AstNode {
     }
 }
 
-export class IfStmNode extends AstNode {
+export class IfStmNode extends AstStatementNode {
     condition: AstNode | null
     body: BlockStmNode
     alternate!: IfStmNode
     constructor(condition: AstNode | null, body: BlockStmNode) {
         super()
         this.condition = condition
+        this.body = body
+    }
+}
+
+export class ForStmNode extends AstStatementNode {
+    init_stm: VarDeclStmNode
+    condition: AstNode
+    update_stm: AstStatementNode
+    body: BlockStmNode
+    constructor(init_stm: VarDeclStmNode, condition: AstNode, update_stm: AstStatementNode, body: BlockStmNode) {
+        super()
+        this.init_stm = init_stm
+        this.condition = condition
+        this.update_stm = update_stm
         this.body = body
     }
 }

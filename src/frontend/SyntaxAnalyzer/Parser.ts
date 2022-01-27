@@ -1,5 +1,5 @@
 import { dump } from './../../utils';
-import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode } from './../AST/AST';
+import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode } from './../AST/AST';
 import { AstNode, BinOpNode, LiteralNode, UnOpNode } from "frontend/AST/AST"
 import { Token, TokenType, TOKEN_TYPES } from './Tokens'
 import { exit, LogManager } from 'utils';
@@ -106,7 +106,10 @@ export class Parser {
         this.eat(TOKEN_TYPES.block_start)
         this.eat(TOKEN_TYPES.new_line)
         let statements: AstStatementNode[] = this.parse_stm_list()
-        if (this.current_token.type !== TOKEN_TYPES.elif && this.current_token.type !== TOKEN_TYPES.else) {
+        if (
+            this.current_token.type !== TOKEN_TYPES.elif && 
+            this.current_token.type !== TOKEN_TYPES.else
+        ) {
             this.eat(TOKEN_TYPES.end_key)
         }
         return new BlockStmNode(statements)
@@ -129,6 +132,9 @@ export class Parser {
         }
         else if (this.current_token.type === TOKEN_TYPES.if) {
             return this.parse_if()
+        }
+        else if (this.current_token.type === TOKEN_TYPES.for) {
+            return this.parse_for()
         }
         else if (this.current_token.type === TOKEN_TYPES.shared_import_key) {
             return this.parse_shared_import()
@@ -207,6 +213,17 @@ export class Parser {
         let condition = null
         let body = this.parse_block_stm()
         let node = new IfStmNode(condition, body) 
+        return node
+    }
+    private parse_for(): ForStmNode {
+        this.eat(TOKEN_TYPES.for)
+        let init_stm = this.parse_vardecl()
+        this.eat(TOKEN_TYPES.semicolon)
+        let condition = this.parse_bin_expr()
+        this.eat(TOKEN_TYPES.semicolon)
+        let udpate_stm = this.parse_assignment()
+        let body = this.parse_block_stm()
+        let node = new ForStmNode(init_stm, condition, udpate_stm, body)
         return node
     }
     private parse_shared_import(): SharedImpStmNode {

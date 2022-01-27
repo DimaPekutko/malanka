@@ -1,10 +1,10 @@
-import { LogManager, uid } from './../../utils';
+import { find_ld_linker_path, LogManager, uid } from './../../utils';
 import { SymbolManager } from 'frontend/SymbolManager';
 import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 
-import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode } from "frontend/AST/AST";
+import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode } from "frontend/AST/AST";
 import { INodeVisitor } from "frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "frontend/SyntaxAnalyzer/Tokens";
 
@@ -199,6 +199,20 @@ export class Linux_x86_64 implements INodeVisitor {
         }
 
     }
+    visit_ForStmNode(node: ForStmNode): void {
+        let start_label = this.nasm.gen_label("FOR_START")
+        let end_label = this.nasm.gen_label("FOR_END")
+        let var_name = node.init_stm.var_name
+        this.visit(node.init_stm)
+        this.nasm.add_label(start_label)
+        this.visit(node.condition)
+        this.nasm.text(`test rax, rax`)
+        this.nasm.text(`jz ${end_label}`)
+        this.visit(node.body)
+        this.visit(node.update_stm)
+        this.nasm.text(`jmp ${start_label}`)
+        this.nasm.add_label(end_label)
+    }
     visit_VarDeclStmNode(node: VarDeclStmNode): void {
         let var_name: string = node.var_name
         this.visit(node.init_value)
@@ -287,7 +301,7 @@ export class Linux_x86_64 implements INodeVisitor {
         let linker_path = ``
         if (this.symbol_manager.shared_libs_list.length > 0) {
             cmd += `-lc -dynamic-linker `
-            linker_path = this.find_ld_linker_path()
+            linker_path = find_ld_linker_path()
             cmd += (linker_path+" ")
             // this.symbol_manager.shared_libs_list.forEach(lib_path => {
             //     cmd += (lib_path+" ")
@@ -302,11 +316,6 @@ export class Linux_x86_64 implements INodeVisitor {
         catch (err) {
             LogManager.error("Linking failed.", "Linux_x86_64.ts")
         }
-    }
-    private find_ld_linker_path(): string {
-        let output = execSync("ls /lib64 | grep ld-linux-x86-64.so")
-        let linker_path: string = "/lib64/"+Buffer.from(output).toString()
-        return linker_path
     }
     
 }

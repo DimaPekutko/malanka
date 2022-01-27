@@ -58,6 +58,12 @@ export abstract class SharedLibManager {
     }
 }
 
+export const find_ld_linker_path = (): string => {
+    let output = execSync("ls /lib64 | grep ld-linux-x86-64.so")
+    let linker_path: string = "/lib64/"+Buffer.from(output).toString()
+    return linker_path
+}
+
 export abstract class LogManager {
     private static full_log = ``
     static to_log: boolean = true

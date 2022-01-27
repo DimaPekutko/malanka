@@ -1,5 +1,5 @@
 import { is_float, is_int } from './../../utils';
-import { TypeNode, IfStmNode } from './../AST/AST';
+import { TypeNode, IfStmNode, ForStmNode } from './../AST/AST';
 import { TypeSymbol } from './../SymbolManager';
 import { LogManager, dump } from 'utils';
 import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from 'frontend/AST/AST';
@@ -83,6 +83,15 @@ export class SemanticAnalyzer implements INodeVisitor {
         this.eat_type(node.type)
     }
     visit_IfStmNode(node: IfStmNode): void {
+        if (node.condition !== null) {
+            this.visit(node.condition)
+        }
+        this.visit(node.body)
+    }
+    visit_ForStmNode(node: ForStmNode): void {
+        this.visit(node.init_stm)
+        this.visit(node.condition)
+        this.visit(node.update_stm)
         this.visit(node.body)
     }
     visit_VarDeclStmNode(node: VarDeclStmNode): void {
