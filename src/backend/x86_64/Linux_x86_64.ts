@@ -195,6 +195,7 @@ export class Linux_x86_64 implements INodeVisitor {
         }
         else {
             this.nasm.add_label(end_label)
+            this.nasm.buffer_label = ""
         }
 
     }

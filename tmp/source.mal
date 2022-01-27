@@ -3,6 +3,10 @@ dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
 a @int = 1
 
+if 10 == 7-3+6:
+    printf("%d", 2)
+end
+
 if (1 < 2) and a and (0 == 0):
     printf("if true")
 elif 3 > 3:
