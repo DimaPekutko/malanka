@@ -8,7 +8,7 @@ Malanka is a compiled, statically typed general purpose programming language wri
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
 // print a message
-printf("Hello, Wordl!")
+printf("Hello, World!")
 ```
 
 ## Installation
@@ -21,7 +21,7 @@ npm i
 ```
 
 ## Usage
-Edit tmp/test.mal file:
+Edit tmp/source.mal file:
 ```
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
