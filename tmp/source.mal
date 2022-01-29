@@ -1,12 +1,18 @@
 // import libc library dynamically for using printf
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
-a @int = 32 or 10
+.my_func @int # n @int:
+    printf("hello")
+end
 
-if a:
-    for j @int = 1; j < 10; j = j+1:
-        printf("apple №%d", j)
-    end
-else:
-    printf("not a")
+a @int = 2
+
+.some @int # n @int:
+    printf("some called")
+end
+
+my_func(2)
+
+.r @int # n @int:
+    printf("r called")
 end

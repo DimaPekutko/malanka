@@ -4,7 +4,7 @@ import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 
-import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode } from "frontend/AST/AST";
+import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode } from "frontend/AST/AST";
 import { INodeVisitor } from "frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "frontend/SyntaxAnalyzer/Tokens";
 
@@ -69,6 +69,25 @@ export class Linux_x86_64 implements INodeVisitor {
     visit_ProgramNode(node: ProgramNode): void {
         this.fill_extern_symbols()
         this.fill_system_constants()
+
+
+        // settting up func decl statements at the end of array
+        // this need to write nasm procedures code after exit syscall instruction only
+        node.body.children.sort((stm1: AstStatementNode, stm2: AstStatementNode): any => {
+            let func_decl1 = stm1 instanceof FuncDeclStmNode
+            let func_decl2 = stm2 instanceof FuncDeclStmNode
+            
+            if (func_decl1 && !func_decl2) {
+                return 1
+            }
+            else if (!func_decl1 && func_decl2) {
+                return -1
+            }
+            else {
+                return 0
+            }
+        })
+
         this.visit(node.body)
     }
     visit_BlockStmNode(node: BlockStmNode): void {
@@ -117,7 +136,7 @@ export class Linux_x86_64 implements INodeVisitor {
             this.nasm.text(`xor rax, rax`)
             this.nasm.text(`jmp ${and_end_label}`)
             this.nasm.add_label(right_and_label)
-            this.nasm.text(`xor rax,rax`)
+            this.nasm.text(`xor rax, rax`)
             this.nasm.text(`not rax`)
             this.nasm.add_label(and_end_label)
             this.nasm.text(`and rax, rbx`)
@@ -222,6 +241,15 @@ export class Linux_x86_64 implements INodeVisitor {
         this.visit(node.update_stm)
         this.nasm.text(`jmp ${start_label}`)
         this.nasm.add_label(end_label)
+    }
+    visit_FuncDeclStmNode(node: FuncDeclStmNode): void {
+        this.nasm.add_label(`${node.func_name}`)
+        this.nasm.text(`push rbp`)
+        this.nasm.text(`mov rbp, rsp`)
+        this.visit(node.body)
+        this.nasm.text(`mov rsp, rbp`)
+        this.nasm.text(`pop rbp`)
+        this.nasm.text(`ret`)
     }
     visit_VarDeclStmNode(node: VarDeclStmNode): void {
         let var_name: string = node.var_name

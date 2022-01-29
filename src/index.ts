@@ -16,7 +16,7 @@ const print_tokens = (tokens: Token[]): void => {
 const main = (): void => {
     let code: string = read_from_file("./tmp/source.mal")
 
-    LogManager.to_log = false
+    LogManager.to_log = true
 
     LogManager.log("Converting code into tokens..")
     const lexer = new Lexer(code)    

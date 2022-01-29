@@ -1,5 +1,5 @@
 import { dump } from './../../utils';
-import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode } from './../AST/AST';
+import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ParamNode } from './../AST/AST';
 import { AstNode, BinOpNode, LiteralNode, UnOpNode } from "frontend/AST/AST"
 import { Token, TokenType, TOKEN_TYPES } from './Tokens'
 import { exit, LogManager } from 'utils';
@@ -61,6 +61,12 @@ export class Parser {
     }
     private peek(): Token {
         return this.tokens[0]
+    }
+    private parse_type(): TypeNode {
+        this.eat(TOKEN_TYPES.type_mark)
+        let type_name = this.current_token.value
+        this.eat(TOKEN_TYPES.identifier)
+        return new TypeNode(type_name)
     }
     private parse_stm_list(is_program_block: boolean = false): AstStatementNode[] {
         let statements: AstStatementNode[] = []
@@ -136,6 +142,9 @@ export class Parser {
         else if (this.current_token.type === TOKEN_TYPES.for) {
             return this.parse_for()
         }
+        else if (this.current_token.type === TOKEN_TYPES.func_decl_mark) {
+            return this.parse_funcdecl()
+        }
         else if (this.current_token.type === TOKEN_TYPES.shared_import_key) {
             return this.parse_shared_import()
         }
@@ -160,11 +169,9 @@ export class Parser {
     private parse_vardecl(): VarDeclStmNode {
         let name = this.current_token.value
         this.eat(TOKEN_TYPES.identifier)
-        this.eat(TOKEN_TYPES.type_mark)
-        let type_name = this.current_token.value
-        this.eat(TOKEN_TYPES.identifier)
+        let type = this.parse_type()
         this.eat(TOKEN_TYPES.assign_op)
-        return new VarDeclStmNode(name, new TypeNode(type_name), this.parse_bin_expr())
+        return new VarDeclStmNode(name, type, this.parse_bin_expr())
     }
     private parse_funccall(): FuncCallStmNode {
         let name = this.current_token.value
@@ -225,6 +232,34 @@ export class Parser {
         let body = this.parse_block_stm()
         let node = new ForStmNode(init_stm, condition, udpate_stm, body)
         return node
+    }
+    private parse_funcdecl(): FuncDeclStmNode {
+        this.eat(TOKEN_TYPES.func_decl_mark)
+        let func_name = this.current_token.value
+        this.eat(TOKEN_TYPES.identifier)
+        let ret_type = this.parse_type()
+        let params = this.parse_params()
+        let body = this.parse_block_stm()
+        let node = new FuncDeclStmNode(func_name, ret_type, params, body)
+        return node
+    }
+    private parse_params(): ParamNode[] {
+        let params: ParamNode[] = []
+        if (this.current_token.type === TOKEN_TYPES.params_mark) {
+            this.eat(TOKEN_TYPES.params_mark)
+            let name: string
+            let type: TypeNode
+            do {
+                if (params.length > 0) {
+                    this.eat(TOKEN_TYPES.comma)
+                }
+                name = this.current_token.value
+                this.eat(TOKEN_TYPES.identifier)
+                type = this.parse_type()
+                params.push(new ParamNode(name, type))
+            } while(this.current_token.type === TOKEN_TYPES.comma)
+        }
+        return params
     }
     private parse_shared_import(): SharedImpStmNode {
         this.eat(TOKEN_TYPES.shared_import_key)

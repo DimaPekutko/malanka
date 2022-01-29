@@ -1,6 +1,6 @@
 import { is_float, is_int } from './../../utils';
-import { TypeNode, IfStmNode, ForStmNode } from './../AST/AST';
-import { TypeSymbol } from './../SymbolManager';
+import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode } from './../AST/AST';
+import { TypeSymbol, FuncSymbol } from './../SymbolManager';
 import { LogManager, dump } from 'utils';
 import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from 'frontend/AST/AST';
 import { INodeVisitor } from 'frontend/AST/INodeVisitor';
@@ -29,7 +29,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         // type matching error
         if(this.current_type.name !== type.name) {
             LogManager.error(
-                `Invalid types`,
+                `Invalid types: ${this.current_type.name} !== ${type.name}`,
                 "SemanticAnalyzer.ts"
             )
         }
@@ -45,6 +45,7 @@ export class SemanticAnalyzer implements INodeVisitor {
     }
     visit_BlockStmNode(node: BlockStmNode): void {
         node.children.forEach(stm => {
+            this.eat_type(null)
             this.visit(stm)
         })
     }
@@ -93,6 +94,28 @@ export class SemanticAnalyzer implements INodeVisitor {
         this.visit(node.condition)
         this.visit(node.update_stm)
         this.visit(node.body)
+    }
+    visit_FuncDeclStmNode(node: FuncDeclStmNode): void {
+        let func_name = node.func_name
+        let type_name = node.ret_type.name
+        this.visit(node.body)
+        if (this.symbol_manager.GLOBAL_SCOPE.get(func_name) === undefined) {
+            if (this.symbol_manager.GLOBAL_SCOPE.get(type_name) instanceof TypeSymbol) {
+                this.symbol_manager.GLOBAL_SCOPE.set(func_name, new FuncSymbol(func_name))
+            }
+            else {
+                LogManager.error(
+                    `Undefined typename '${type_name}'.`,
+                    "SemanticAnalyzer.ts"
+                )
+            }
+        }
+        else {
+            LogManager.error(
+                `Symbol '${type_name}' already declared`,
+                "SemanticAnalyzer.ts"
+            )
+        }
     }
     visit_VarDeclStmNode(node: VarDeclStmNode): void {
         let var_name = node.var_name

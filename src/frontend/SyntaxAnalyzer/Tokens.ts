@@ -46,7 +46,7 @@ export abstract class TOKEN_TYPES {
     // marks
     static "block_start" = new TokenType("block_start", "\\:")
     static "func_decl_mark" = new TokenType("func_decl_mark", "\\.")
-    static "func_params_mark" = new TokenType("func_params_mark", "\\#")
+    static "params_mark" = new TokenType("params_mark", "\\#")
     static "type_mark" = new TokenType("type_mark", "\\@")
     // conditions
     static "if" = new TokenType("if", "if")

@@ -112,6 +112,30 @@ export class ForStmNode extends AstStatementNode {
     }
 }
 
+export class ParamNode extends AstNode {
+    name: string
+    type: TypeNode
+    constructor(name: string, type: TypeNode) {
+        super()
+        this.name = name
+        this.type = type
+    }
+}
+
+export class FuncDeclStmNode extends AstStatementNode {
+    func_name: string
+    ret_type: TypeNode
+    params: ParamNode[]
+    body: BlockStmNode
+    constructor(func_name: string, ret_type: TypeNode, params: ParamNode[], body: BlockStmNode) {
+        super()
+        this.func_name = func_name
+        this.ret_type = ret_type
+        this.params = params
+        this.body = body
+    }
+}
+
 export class FuncCallStmNode extends AstStatementNode {
     func_name: string
     args: AstNode[]
