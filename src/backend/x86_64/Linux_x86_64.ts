@@ -4,7 +4,7 @@ import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 
-import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode } from "frontend/AST/AST";
+import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode } from "frontend/AST/AST";
 import { INodeVisitor } from "frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "frontend/SyntaxAnalyzer/Tokens";
 
@@ -247,6 +247,13 @@ export class Linux_x86_64 implements INodeVisitor {
         this.nasm.text(`push rbp`)
         this.nasm.text(`mov rbp, rsp`)
         this.visit(node.body)
+        this.nasm.text(`xor rax, rax`)
+        this.nasm.text(`mov rsp, rbp`)
+        this.nasm.text(`pop rbp`)
+        this.nasm.text(`ret`)
+    }
+    visit_ReturnStmNode(node: ReturnStmNode): void {
+        this.visit(node.expr) // generate mov rax, expr
         this.nasm.text(`mov rsp, rbp`)
         this.nasm.text(`pop rbp`)
         this.nasm.text(`ret`)

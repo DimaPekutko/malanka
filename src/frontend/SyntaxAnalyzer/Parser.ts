@@ -1,5 +1,5 @@
 import { dump } from './../../utils';
-import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ParamNode } from './../AST/AST';
+import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ParamNode, ReturnStmNode } from './../AST/AST';
 import { AstNode, BinOpNode, LiteralNode, UnOpNode } from "frontend/AST/AST"
 import { Token, TokenType, TOKEN_TYPES } from './Tokens'
 import { exit, LogManager } from 'utils';
@@ -145,6 +145,9 @@ export class Parser {
         else if (this.current_token.type === TOKEN_TYPES.func_decl_mark) {
             return this.parse_funcdecl()
         }
+        else if (this.current_token.type === TOKEN_TYPES.return_mark) {
+            return this.parse_return()
+        }
         else if (this.current_token.type === TOKEN_TYPES.shared_import_key) {
             return this.parse_shared_import()
         }
@@ -260,6 +263,10 @@ export class Parser {
             } while(this.current_token.type === TOKEN_TYPES.comma)
         }
         return params
+    }
+    private parse_return(): ReturnStmNode {
+        this.eat(TOKEN_TYPES.return_mark)
+        return new ReturnStmNode(this.parse_bin_expr())
     }
     private parse_shared_import(): SharedImpStmNode {
         this.eat(TOKEN_TYPES.shared_import_key)

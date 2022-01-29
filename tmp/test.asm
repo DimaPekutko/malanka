@@ -1301,55 +1301,85 @@
 segment .text
 global _start
 _start:
-	mov rax, 2
-	mov [a], rax
-	; ------ funccall -> my_func
+BINOP_START__e8PdS___0:
+	mov rax, 1
+	push rax
+	mov rax, 10
+	mov rbx, rax
+	pop rax
+BOOL_AND_START__pvs8U___1:
+	test rax, rax
+	jnz BOOL_AND_RIGHT__O8ZCN___2
+	xor rax, rax
+	jmp BOOL_AND_END__n2AD6___3
+BOOL_AND_RIGHT__O8ZCN___2:
+	xor rax, rax
+	not rax
+BOOL_AND_END__n2AD6___3:
+	and rax, rbx
+BINOP_END__5Kvl1___4:
+	mov [to_ret], rax
+	; ------ funccall -> fact
 	push rdi
 	push rsi
 	push rdx
 	push rcx
 	push r8
 	push r9
-	mov rax, 2
-	mov rdi, rax
-	call my_func
+	call fact
 	pop r9
 	pop r8
 	pop rcx
 	pop rdx
 	pop rsi
 	pop rdi
-	; ------ funccall end -> my_func
+	; ------ funccall end -> fact
+	mov [value], rax
+	; ------ funccall -> printf
+	push rdi
+	push rsi
+	push rdx
+	push rcx
+	push r8
+	push r9
+	mov rax, str_SGBahi0BtC
+	mov rdi, rax
+	mov rax, [value]
+	mov rsi, rax
+	call printf
+	pop r9
+	pop r8
+	pop rcx
+	pop rdx
+	pop rsi
+	pop rdi
+	; ------ funccall end -> printf
 	; exit
 	mov rax, 60
 	xor rdi, rdi
 	syscall
-my_func:
+fact:
 	push rbp
 	mov rbp, rsp
-	; ------ funccall -> printf
-	push rdi
-	push rsi
-	push rdx
-	push rcx
-	push r8
-	push r9
-	mov rax, str_D3YB2I3cIF
-	mov rdi, rax
-	call printf
-	pop r9
-	pop r8
-	pop rcx
-	pop rdx
-	pop rsi
-	pop rdi
-	; ------ funccall end -> printf
+COND_START__JOQX6___5:
+	mov rax, [to_ret]
+	test rax, rax
+	jz IF_END__i2P10___7
+IF_START__BNx3K___6:
+BINOP_START__qgbq4___9:
+	mov rax, 3
+	push rax
+	mov rax, 43
+	mov rbx, rax
+	pop rax
+	add rax, rbx
+BINOP_END__74lBF___10:
 	mov rsp, rbp
 	pop rbp
 	ret
-some:
-	push rbp
-	mov rbp, rsp
+	jmp COND_END__35iXr___8
+IF_END__i2P10___7:
+COND_END__35iXr___8:
 	; ------ funccall -> printf
 	push rdi
 	push rsi
@@ -1357,7 +1387,7 @@ some:
 	push rcx
 	push r8
 	push r9
-	mov rax, str_TZkojMXY9f
+	mov rax, str_Ah3RPG4vhW
 	mov rdi, rax
 	call printf
 	pop r9
@@ -1367,37 +1397,15 @@ some:
 	pop rsi
 	pop rdi
 	; ------ funccall end -> printf
-	mov rsp, rbp
-	pop rbp
-	ret
-r:
-	push rbp
-	mov rbp, rsp
-	; ------ funccall -> printf
-	push rdi
-	push rsi
-	push rdx
-	push rcx
-	push r8
-	push r9
-	mov rax, str_UW5TlUvO2d
-	mov rdi, rax
-	call printf
-	pop r9
-	pop r8
-	pop rcx
-	pop rdx
-	pop rsi
-	pop rdi
-	; ------ funccall end -> printf
+	xor rax, rax
 	mov rsp, rbp
 	pop rbp
 	ret
 segment .bss
-	a resb 8
+	to_ret resb 8
+	value resb 8
 segment .data
 	TRUE db 1
 	FALSE db 0
-	str_D3YB2I3cIF db "hello",0xa,0
-	str_TZkojMXY9f db "some called",0xa,0
-	str_UW5TlUvO2d db "r called",0xa,0
+	str_SGBahi0BtC db "VALUE => %d",0xa,0
+	str_Ah3RPG4vhW db "hello from function :)))",0xa,0

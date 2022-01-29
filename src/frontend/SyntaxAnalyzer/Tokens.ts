@@ -48,6 +48,7 @@ export abstract class TOKEN_TYPES {
     static "func_decl_mark" = new TokenType("func_decl_mark", "\\.")
     static "params_mark" = new TokenType("params_mark", "\\#")
     static "type_mark" = new TokenType("type_mark", "\\@")
+    static "return_mark" = new TokenType("return_mark", "\\!")
     // conditions
     static "if" = new TokenType("if", "if")
     static "elif" = new TokenType("elif", "elif")

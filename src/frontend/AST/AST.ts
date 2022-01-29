@@ -136,6 +136,14 @@ export class FuncDeclStmNode extends AstStatementNode {
     }
 }
 
+export class ReturnStmNode extends AstStatementNode {
+    expr: AstNode
+    constructor(expr: AstNode) {
+        super()
+        this.expr = expr
+    }
+}
+
 export class FuncCallStmNode extends AstStatementNode {
     func_name: string
     args: AstNode[]

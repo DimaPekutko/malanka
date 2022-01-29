@@ -1,5 +1,5 @@
 import { is_float, is_int } from './../../utils';
-import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode } from './../AST/AST';
+import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode } from './../AST/AST';
 import { TypeSymbol, FuncSymbol } from './../SymbolManager';
 import { LogManager, dump } from 'utils';
 import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from 'frontend/AST/AST';
@@ -101,6 +101,9 @@ export class SemanticAnalyzer implements INodeVisitor {
         this.visit(node.body)
         if (this.symbol_manager.GLOBAL_SCOPE.get(func_name) === undefined) {
             if (this.symbol_manager.GLOBAL_SCOPE.get(type_name) instanceof TypeSymbol) {
+                node.params.forEach((param) => {
+                    this.symbol_manager.GLOBAL_SCOPE.set(param.name, new VarSymbol(param.name, param.type))    
+                })
                 this.symbol_manager.GLOBAL_SCOPE.set(func_name, new FuncSymbol(func_name))
             }
             else {
@@ -116,6 +119,9 @@ export class SemanticAnalyzer implements INodeVisitor {
                 "SemanticAnalyzer.ts"
             )
         }
+    }
+    visit_ReturnStmNode(node: ReturnStmNode): void {
+        this.visit(node.expr)
     }
     visit_VarDeclStmNode(node: VarDeclStmNode): void {
         let var_name = node.var_name
