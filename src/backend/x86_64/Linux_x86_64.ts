@@ -1,4 +1,4 @@
-import { find_ld_linker_path, LogManager, uid } from './../../utils';
+import { SharedLibManager, LogManager, uid } from './../../utils';
 import { SymbolManager } from 'frontend/SymbolManager';
 import { writeFileSync } from "fs"
 import { execSync } from "child_process"
@@ -108,6 +108,18 @@ export class Linux_x86_64 implements INodeVisitor {
         }
         // logical ops
         else if (op_type === TOKEN_TYPES.and_op) {
+            let and_start_label = this.nasm.gen_label("BOOL_AND_START")
+            let right_and_label = this.nasm.gen_label("BOOL_AND_RIGHT")
+            let and_end_label = this.nasm.gen_label("BOOL_AND_END")
+            this.nasm.add_label(and_start_label)
+            this.nasm.text(`test rax, rax`)
+            this.nasm.text(`jnz ${right_and_label}`)
+            this.nasm.text(`xor rax, rax`)
+            this.nasm.text(`jmp ${and_end_label}`)
+            this.nasm.add_label(right_and_label)
+            this.nasm.text(`xor rax,rax`)
+            this.nasm.text(`not rax`)
+            this.nasm.add_label(and_end_label)
             this.nasm.text(`and rax, rbx`)
         }
         else if (op_type === TOKEN_TYPES.or_op) {
@@ -117,7 +129,6 @@ export class Linux_x86_64 implements INodeVisitor {
         else {
             let comp_start_label = this.nasm.gen_label("COMP_START")
             let right_comp_label = this.nasm.gen_label("COMP_RIGHT")
-            let wrong_comp_label = this.nasm.gen_label("COMP_WRONG")
             let comp_end_label = this.nasm.gen_label("COMP_END")
             this.nasm.add_label(comp_start_label)
             this.nasm.text("cmp rax, rbx")
@@ -136,7 +147,6 @@ export class Linux_x86_64 implements INodeVisitor {
             else if(op_type === TOKEN_TYPES.equal_op) {
                 this.nasm.text(`je ${right_comp_label}`)
             }
-            this.nasm.add_label(wrong_comp_label)
             this.nasm.text(`xor rax, rax`)
             this.nasm.text(`jmp ${comp_end_label}`)
             this.nasm.add_label(right_comp_label)
@@ -285,13 +295,13 @@ export class Linux_x86_64 implements INodeVisitor {
         this.compile_nasm()
         this.link_obj()
 
-        LogManager.success(`Run by: ${"./"+this.output_filename}.`, "Linux_x86_64.ts")
+        LogManager.success(`Run by: ${"./"+this.output_filename}.`)
         // this.run_binary()
     }
     private compile_nasm(): void {
         try {
             execSync(`nasm -f elf64 ${this.output_filename}.asm `)
-            LogManager.log("Compiled successfully.", "Linux_x86_64.ts")
+            LogManager.log("Compiled successfully.")
         } catch (err) {
             LogManager.error("Compilation failed.", "Linux_x86_64.ts")
         }
@@ -301,7 +311,7 @@ export class Linux_x86_64 implements INodeVisitor {
         let linker_path = ``
         if (this.symbol_manager.shared_libs_list.length > 0) {
             cmd += `-lc -dynamic-linker `
-            linker_path = find_ld_linker_path()
+            linker_path = SharedLibManager.find_ld_linker_path()
             cmd += (linker_path+" ")
             // this.symbol_manager.shared_libs_list.forEach(lib_path => {
             //     cmd += (lib_path+" ")
@@ -311,7 +321,7 @@ export class Linux_x86_64 implements INodeVisitor {
         cmd = cmd.replace(/(\r\n|\n|\r)/gm, "");
         try {
             execSync(cmd)
-            LogManager.log("Linked successfully.", "Linux_x86_64.ts")
+            LogManager.log("Linked successfully.")
         }
         catch (err) {
             LogManager.error("Linking failed.", "Linux_x86_64.ts")

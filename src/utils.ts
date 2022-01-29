@@ -56,13 +56,13 @@ export abstract class SharedLibManager {
         let res_string: string = Buffer.from(output).toString()
         return res_string
     }
+    static find_ld_linker_path(): string {
+        let output = execSync("ls /lib64 | grep ld-linux-x86-64.so | head -1")
+        let linker_path: string = "/lib64/"+Buffer.from(output).toString()
+        return linker_path
+    }
 }
 
-export const find_ld_linker_path = (): string => {
-    let output = execSync("ls /lib64 | grep ld-linux-x86-64.so | head -1")
-    let linker_path: string = "/lib64/"+Buffer.from(output).toString()
-    return linker_path
-}
 
 export abstract class LogManager {
     private static full_log = ``
@@ -73,14 +73,14 @@ export abstract class LogManager {
         this.full_log += (error + "\n")
         exit()
     }
-    static log(msg: string, from: string) {
+    static log(msg: string, from: string = ":") {
         if(this.to_log) {
             let message = chalk.blueBright("[LOG] ") + from + ": " + msg
             console.log(message)
             this.full_log += (message + "\n")
         }
     }
-    static success(msg: string, from: string) {
+    static success(msg: string, from: string = "=> :") {
         if(this.to_log) {
             let message = chalk.greenBright("[SUCCESS] ") + from + ": " + msg
             console.log(message)

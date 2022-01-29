@@ -1,11 +1,11 @@
 // import libc library dynamically for using printf
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
-a @int = 10 > 3 and 32 <= 32
+a @int = 32 or 10
 
 if a:
-    for j @int = 0; j < 10; j = j + 1:
-        printf("a")
+    for j @int = 1; j < 10; j = j+1:
+        printf("apple №%d", j)
     end
 else:
     printf("not a")
