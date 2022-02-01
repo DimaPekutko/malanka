@@ -1,3 +1,4 @@
+import { uid } from './../../utils';
 import { Token } from 'frontend/SyntaxAnalyzer/Tokens';
 
 export abstract class AstNode {
@@ -8,9 +9,11 @@ export abstract class AstStatementNode extends AstNode {}
 
 export class BlockStmNode extends AstStatementNode {
     children: AstStatementNode[]
+    uid: string // this need to identify symbol table for this block scope in symbol manager
     constructor(children: AstStatementNode[]) {
         super()
         this.children = children
+        this.uid = uid(32)
     }
 }
 

@@ -1,16 +1,12 @@
 // import libc library dynamically for using printf
+
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
+n @int = 228
 
-to_ret @int = 1 and 10
 
-.fact @int:
-   if to_ret:
-      ! 3 +43
-   end
-   printf("hello from function :)))") 
+.func @int # n @int:
+    n = 2
 end
 
-value @int = fact()
-
-printf("VALUE => %d", value)
+printf("%d", n)

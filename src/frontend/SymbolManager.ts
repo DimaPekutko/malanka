@@ -1,4 +1,4 @@
-import { dump, SharedLibManager } from 'utils';
+import { dump, SharedLibManager, LogManager } from 'utils';
 import { TypeNode } from './AST/AST';
 
 
@@ -33,15 +33,30 @@ export class TypeSymbol extends Symbol {
 
 export class SymbolTable {
     readonly symbols: Map<string, Symbol>
-    readonly name: string
+    readonly uid: string
     readonly nesting_lvl: number
-    constructor(name: string, nesting_lvl: number) {
+    readonly parent_scope: SymbolTable | null = null
+    constructor(uid: string, nesting_lvl: number, parent_scope: SymbolTable | null) {
         this.symbols = new Map()    
-        this.name = name
+        this.uid = uid
         this.nesting_lvl = nesting_lvl
+        this.parent_scope = parent_scope
     }
-    get(name: string): Symbol {
-        return this.symbols.get(name)!
+    get(name: string): Symbol | null {
+        let cur_scope: SymbolTable | null = this
+        let symbol
+        while(cur_scope !== null) {
+            symbol = cur_scope.symbols.get(name)
+            if (symbol !== undefined) {
+                return symbol
+            }
+            cur_scope = cur_scope.parent_scope
+        }
+        return null
+    }
+    get_local(name: string): Symbol | null {
+        let symbol = this.symbols.get(name)!
+        return symbol || null 
     }
     set(name: string, value: Symbol): void {
         this.symbols.set(name, value)
@@ -49,26 +64,33 @@ export class SymbolTable {
 }
 
 export class SymbolManager {
-    readonly GLOBAL_SCOPE: SymbolTable
-    readonly FUNC_SCOPES: SymbolTable[]
+    readonly SCOPES: SymbolTable[]
+    // readonly GLOBAL_SCOPE: SymbolTable
+    // readonly FUNC_SCOPES: SymbolTable[]
     readonly shared_libs_list: string[]
     constructor() {
-        this.GLOBAL_SCOPE = new SymbolTable("global", 1)
-        this.FUNC_SCOPES = []
+        this.SCOPES = []
         this.shared_libs_list = []
     }
-    new_func_scope(name: string): void {
-        this.FUNC_SCOPES.push(new SymbolTable(name, 2))
+    new_scope(uid: string, nesting_lvl: number, parent_scope: SymbolTable | null): SymbolTable {
+        const new_scope = new SymbolTable(uid, nesting_lvl, parent_scope)
+        this.SCOPES.push(new_scope)
+        return this.SCOPES[this.SCOPES.length-1]
     }
-    get_func_scope(func_name: string): SymbolTable | null {
-        for(let i = 0; i < this.FUNC_SCOPES.length; i++) {
-            if(this.FUNC_SCOPES[i].name === func_name) {
-                return this.FUNC_SCOPES[i]
+    get_scope(uid: string): SymbolTable | null {
+        let scope = null
+        for (let i = 0; i < this.SCOPES.length; i++) {
+            scope = this.SCOPES[i]
+            if (String(scope.uid) === String(uid)) {
+                return scope
             }
         }
         return null
     }
     load_shared_symbols(dist: string): void {
+        if (!this.SCOPES[0]) {
+            throw new Error("Cannot execute load_shared_symbols function (no global scope).")
+        }
         this.shared_libs_list.push(dist)
         const import_names = SharedLibManager.get_lib_symbols(dist)
         const import_json = JSON.parse(import_names)
@@ -86,7 +108,7 @@ export class SymbolManager {
                     case "FUNC": {
                         imported_symbol = new FuncSymbol(name)
                         imported_symbol.IS_EXTERNAL = true
-                        this.GLOBAL_SCOPE.set(name, imported_symbol)
+                        this.SCOPES[0].set(name, imported_symbol)
                     }
                 }
             }

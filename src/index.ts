@@ -38,6 +38,7 @@ const main = (): void => {
     semantic_analyzer.analyze()
     LogManager.log("Code analyzed. No errors found.")
     // dump(ast)
+    // exit()
 
     LogManager.log("Start building...")
     let compiler = new Linux_x86_64(ast, symbol_manager, "./tmp/test")

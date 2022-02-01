@@ -1,6 +1,6 @@
 import { is_float, is_int } from './../../utils';
 import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode } from './../AST/AST';
-import { TypeSymbol, FuncSymbol } from './../SymbolManager';
+import { TypeSymbol, FuncSymbol, SymbolTable } from './../SymbolManager';
 import { LogManager, dump } from 'utils';
 import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from 'frontend/AST/AST';
 import { INodeVisitor } from 'frontend/AST/INodeVisitor';
@@ -10,6 +10,7 @@ import { DATA_TYPES } from 'frontend/DataTypes';
 export class SemanticAnalyzer implements INodeVisitor {
     ast: AstNode
     symbol_manager: SymbolManager
+    private current_scope: SymbolTable | null = null
     private current_type: TypeNode | null = null
     constructor(ast: AstNode, symbol_manager: SymbolManager) {
         this.ast = ast
@@ -37,21 +38,39 @@ export class SemanticAnalyzer implements INodeVisitor {
     visit_ProgramNode(node: ProgramNode): void {
         let data_types = Object.entries(DATA_TYPES)
         let type_name
+        this.current_scope = this.symbol_manager.new_scope(node.body.uid, 0, null)
         data_types.forEach(type => {
             type_name = type[0]
-            this.symbol_manager.GLOBAL_SCOPE.set(type_name, new TypeSymbol(type_name))
+            this.current_scope?.set(type_name, new TypeSymbol(type_name))
         })
-        this.visit(node.body)
+        node.body.children.forEach(stm => {
+            this.eat_type(null)
+            this.visit(stm)
+        })
+        // dump(this.symbol_manager)
+
     }
     visit_BlockStmNode(node: BlockStmNode): void {
+        
+        // creating new scope
+        this.current_scope = this.symbol_manager.new_scope(
+            node.uid,
+            this.current_scope?.nesting_lvl!+1,
+            this.current_scope
+        )
+
         node.children.forEach(stm => {
             this.eat_type(null)
             this.visit(stm)
         })
+
+        // come back to parent scope
+        this.current_scope = this.current_scope.parent_scope
+
     }
     visit_AssignStmNode(node: AssignStmNode): void {
         let var_name: string = node.name
-        if (this.symbol_manager.GLOBAL_SCOPE.get(var_name) === undefined) {
+        if (this.current_scope?.get(var_name) === null) {
             LogManager.error(
                 `Symbol ${var_name} did not declared.`,
                 "SemanticAnalyzer.ts"
@@ -98,27 +117,29 @@ export class SemanticAnalyzer implements INodeVisitor {
     visit_FuncDeclStmNode(node: FuncDeclStmNode): void {
         let func_name = node.func_name
         let type_name = node.ret_type.name
-        this.visit(node.body)
-        if (this.symbol_manager.GLOBAL_SCOPE.get(func_name) === undefined) {
-            if (this.symbol_manager.GLOBAL_SCOPE.get(type_name) instanceof TypeSymbol) {
-                node.params.forEach((param) => {
-                    this.symbol_manager.GLOBAL_SCOPE.set(param.name, new VarSymbol(param.name, param.type))    
-                })
-                this.symbol_manager.GLOBAL_SCOPE.set(func_name, new FuncSymbol(func_name))
-            }
-            else {
-                LogManager.error(
-                    `Undefined typename '${type_name}'.`,
-                    "SemanticAnalyzer.ts"
-                )
-            }
-        }
-        else {
+        
+        if (this.current_scope?.get(func_name) !== null) {
             LogManager.error(
                 `Symbol '${type_name}' already declared`,
                 "SemanticAnalyzer.ts"
-            )
+                );
         }
+        
+        if (!(this.current_scope?.get(type_name) instanceof TypeSymbol)) {
+            LogManager.error(
+                `Undefined typename '${type_name}'.`,
+                "SemanticAnalyzer.ts"
+                );
+        }
+
+        node.params.forEach(param => {
+            this.current_scope?.set(param.name, new VarSymbol(param.name, param.type))
+        })
+        
+        this.visit(node.body)
+        
+        this.current_scope?.set(func_name, new FuncSymbol(func_name))
+
     }
     visit_ReturnStmNode(node: ReturnStmNode): void {
         this.visit(node.expr)
@@ -129,9 +150,9 @@ export class SemanticAnalyzer implements INodeVisitor {
         this.visit(node.init_value)
         this.eat_type(node.type)
         this.eat_type(null) // clearing current_type (success type checking case)
-        if (this.symbol_manager.GLOBAL_SCOPE.get(var_name) === undefined) {
-            if (this.symbol_manager.GLOBAL_SCOPE.get(var_type_name) instanceof TypeSymbol) {
-                this.symbol_manager.GLOBAL_SCOPE.set(var_name, new VarSymbol(var_name, node.type))
+        if (this.current_scope?.get_local(var_name) === null) {
+            if (this.current_scope?.get(var_type_name) instanceof TypeSymbol) {
+                this.current_scope?.set(var_name, new VarSymbol(var_name, node.type))
             }
             else {
                 LogManager.error(
@@ -149,7 +170,7 @@ export class SemanticAnalyzer implements INodeVisitor {
     }
     visit_VarNode(node: VarNode): void {
         let var_name = node.name
-        let defined_var = this.symbol_manager.GLOBAL_SCOPE.get(var_name)
+        let defined_var = this.current_scope?.get(var_name)
         if (!(defined_var instanceof VarSymbol)) {
             LogManager.error(
                 `Symbol '${var_name}' did not declared.`,
@@ -160,7 +181,7 @@ export class SemanticAnalyzer implements INodeVisitor {
     visit_FuncCallStmNode(node: FuncCallStmNode): void {
         let func_name = node.func_name
         let args = node.args
-        if (this.symbol_manager.GLOBAL_SCOPE.get(func_name) === undefined) {
+        if (this.current_scope?.get(func_name) === null) {
             LogManager.error(
                 `Symbol ${func_name} did not declared.`,
                 "SemanticAnalyzer.ts"
@@ -172,6 +193,12 @@ export class SemanticAnalyzer implements INodeVisitor {
         })
     }
     visit_SharedImpStmNode(node: SharedImpStmNode): void {
+        if (this.current_scope?.nesting_lvl !== 0) {
+            LogManager.error(
+                `You can import dynamic libraries in global scope only`,
+                "SemanticAnalyzer.ts"
+            )
+        }
         this.symbol_manager.load_shared_symbols(node.str)
     }
     visit_EOFStmNode(node: EOFStmNode): void {

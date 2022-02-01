@@ -1,4 +1,5 @@
-import { SharedLibManager, LogManager, uid } from './../../utils';
+import { SymbolTable } from './../../frontend/SymbolManager';
+import { SharedLibManager, LogManager, uid, dump, exit } from './../../utils';
 import { SymbolManager } from 'frontend/SymbolManager';
 import { writeFileSync } from "fs"
 import { execSync } from "child_process"
@@ -48,6 +49,7 @@ export class Linux_x86_64 implements INodeVisitor {
     symbol_manager: SymbolManager
     output_filename: string
     nasm: NasmWriter
+    current_scope: SymbolTable | null = null
     constructor(ast: AstNode, symbol_manager: SymbolManager, output_filename: string) {
         this.ast = ast
         this.symbol_manager = symbol_manager
@@ -55,8 +57,7 @@ export class Linux_x86_64 implements INodeVisitor {
         this.nasm = new NasmWriter();
     }
     fill_extern_symbols(): void {
-        let global_symbols = this.symbol_manager.GLOBAL_SCOPE.symbols
-        global_symbols.forEach(symbol => {
+        this.current_scope?.symbols.forEach(symbol => {
             if (symbol.IS_EXTERNAL) {
                 this.nasm.extern(`extern ${symbol.name}`)
             }
@@ -67,10 +68,6 @@ export class Linux_x86_64 implements INodeVisitor {
         this.nasm.data("FALSE db 0")
     }
     visit_ProgramNode(node: ProgramNode): void {
-        this.fill_extern_symbols()
-        this.fill_system_constants()
-
-
         // settting up func decl statements at the end of array
         // this need to write nasm procedures code after exit syscall instruction only
         node.body.children.sort((stm1: AstStatementNode, stm2: AstStatementNode): any => {
@@ -87,13 +84,22 @@ export class Linux_x86_64 implements INodeVisitor {
                 return 0
             }
         })
+        
+        this.current_scope = this.symbol_manager.get_scope(node.body.uid)
 
-        this.visit(node.body)
+        this.fill_extern_symbols()
+        this.fill_system_constants()
+
+        node.body.children.forEach(stm => {
+            this.visit(stm)
+        })
     }
     visit_BlockStmNode(node: BlockStmNode): void {
+        this.current_scope = this.symbol_manager.get_scope(node.uid)
         node.children.forEach(stm => {
             this.visit(stm)
         })
+        this.current_scope = this.current_scope?.parent_scope!
     }
     visit_AssignStmNode(node: AssignStmNode): void {
         let var_name: string = node.name
@@ -277,7 +283,7 @@ export class Linux_x86_64 implements INodeVisitor {
             "rdi","rsi","rdx","rcx","r8","r9"
         ]
 
-        const defined_func = this.symbol_manager.GLOBAL_SCOPE.get(func_name)
+        const defined_func = this.current_scope?.get(func_name)
 
         if (defined_func === undefined) {
             throw new Error ("Function dont exist")
