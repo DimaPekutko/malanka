@@ -141,10 +141,10 @@ export class Linux_x86_64 implements INodeVisitor {
         this.nasm.add_label(this.nasm.gen_label("BINOP_START"))
 
         this.visit(node.left)   // generate 'mov rax, l_operand'
-        this.nasm.text(`push rax`)
+        this.nasm.text(`mov rcx, rax`)
         this.visit(node.right)  // generate 'mov rax, r_operand'
         this.nasm.text(`mov rbx, rax`)
-        this.nasm.text(`pop rax`)
+        this.nasm.text(`mov rax, rcx`)
 
         // left operand in rax, right in rbx
 
@@ -325,7 +325,7 @@ export class Linux_x86_64 implements INodeVisitor {
         // var declaration in function
         if (this.current_scope?.is_nested_in_func_scope(var_name)) {
             let offset = this.stack_frame_manager.add_var(var_name)
-            this.nasm.text(`mov [rbp-${offset}], rax`)
+            this.nasm.text(`mov [rbp-${offset}], rax ; "${var_name}" local var.`)
         }
         // var declaration in global scope
         else {
@@ -357,21 +357,30 @@ export class Linux_x86_64 implements INodeVisitor {
             this.nasm.text(`; ------ funccall -> ${func_name}`)
             // saving current arg registers
             for(let i = 0; i < args.length; i++) {
-                this.nasm.text(`push ${arg_registers[i]}`)
+                // this.nasm.text(`push ${arg_registers[i]}`)
             }
+            // this.nasm.text(`add rsp, 0x8*${arg.length}`)
             // filling new arg registers
-            this.nasm.text(`sub rsp, 16`)
-            for (let i = 0; i < args.length; i++) {
-                this.visit(args[i])
-                this.nasm.text(`mov ${arg_registers[i]}, rax`)
+            for (let i = 0; i < arg_registers.length; i++) {
+                if (args[i] instanceof FuncCallStmNode) {
+                    this.visit(args[i])
+                    this.nasm.text(`mov ${arg_registers[i]}, rax`)    
+                }
             }
+            for (let i = 0; i < args.length; i++) {
+                if (!(args[i] instanceof FuncCallStmNode)) {
+                    this.visit(args[i])
+                    this.nasm.text(`mov ${arg_registers[i]}, rax`)    
+                }
+            }
+            this.nasm.text(`sub rsp, 16`)
             this.nasm.text(`xor rax, rax`)
             // calling current function
             this.nasm.text(`call ${func_name}`)
             this.nasm.text(`add rsp, 16`)
-            // pop up old arg registers
+            // pop up current arg registers
             for(let i = args.length-1; i >= 0; i--) {
-                this.nasm.text(`pop ${arg_registers[i]}`)
+                // this.nasm.text(`pop ${arg_registers[i]}`)
             }
             this.nasm.text(`; ------ funccall end -> ${func_name}`)
         }

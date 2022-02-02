@@ -1,11 +1,10 @@
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
-.b @int # n @int:
-    !4
+.fact @int # n @int:
+    if n < 1:
+        !0
+    end
+    !fact(n-1)+n
 end
 
-.a @int:
-    !b()
-end
-
-printf("%d", a())
+printf("Factorial is %d",fact(5))

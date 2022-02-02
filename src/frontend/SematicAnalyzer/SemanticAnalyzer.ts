@@ -119,7 +119,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         
         if (this.current_scope?.get(func_name) !== null) {
             LogManager.error(
-                `Symbol '${type_name}' already declared`,
+                `Symbol '${func_name}' already declared`,
                 "SemanticAnalyzer.ts"
                 );
         }
@@ -130,6 +130,7 @@ export class SemanticAnalyzer implements INodeVisitor {
                 "SemanticAnalyzer.ts"
                 );
         }
+        
 
         const func_symbol = new FuncSymbol(func_name)
         func_symbol.params = node.params
@@ -199,18 +200,34 @@ export class SemanticAnalyzer implements INodeVisitor {
         let func_name = node.func_name
         let args = node.args
         let defined_func = this.current_scope?.get(func_name)
-        if (defined_func === null) {
+        if (args.length > 6) {
+            LogManager.error(
+                `You can use only < 7 arguments in function call (while).`,
+                "SemanticAnalyzer.ts"
+            )
+        }
+        if (!(defined_func instanceof FuncSymbol)) {
             LogManager.error(
                 `Symbol ${func_name} did not declared.`,
                 "SemanticAnalyzer.ts"
             )
         }
-        if (defined_func instanceof FuncSymbol) {
+        else {
             // checking funccall rules if defined_func is user defined function only
-            args.forEach(arg => {
-                this.eat_type(null)
-                this.visit(arg)
-            })
+            if (!defined_func.IS_EXTERNAL) {
+                if (args.length !== defined_func.params.length) {
+                    LogManager.error(
+                        `Arguments count dont match at "${func_name}" func call.`,
+                        "SemanticAnalyzer.ts"
+                    )
+                }
+                let params = defined_func.params
+                for (let i = 0; i < params.length; i++) {
+                    this.eat_type(null) // clearing current_type 
+                    this.visit(args[i]) // setup current_type with current arg type
+                    this.eat_type(params[i].type) // compare current_type with current param type
+                }
+            }
         }
     }
     visit_SharedImpStmNode(node: SharedImpStmNode): void {
