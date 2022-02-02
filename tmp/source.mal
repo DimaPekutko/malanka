@@ -1,14 +1,11 @@
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
+.b @int # n @int:
+    !4
+end
+
 .a @int:
-    !100
+    !b()
 end
 
-.my_func @int:
-    c @int = 3
-    !a(c)
-end
-
-b @int =  my_func()
-
-printf("%d", b)
+printf("%d", a())

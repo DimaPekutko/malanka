@@ -51,7 +51,7 @@ class StackFrameManager {
         this.symbols = new Map()
         this.local_var_offset = 0
     }
-    add_var(name: string, size: number = 4): number {
+    add_var(name: string, size: number = 8): number {
         this.local_var_offset += size
         this.symbols.set(name, this.local_var_offset)
         return this.local_var_offset
@@ -119,9 +119,6 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     visit_BlockStmNode(node: BlockStmNode): void {
         this.current_scope = this.symbol_manager.get_scope(node.uid)
-        if (this.current_scope?.SCOPE_TYPE === ScopeTypes.func_scope) {
-            this.stack_frame_manager.clear()
-        } 
         node.children.forEach(stm => {
             this.visit(stm)
         })
@@ -283,10 +280,33 @@ export class Linux_x86_64 implements INodeVisitor {
         this.nasm.add_label(end_label)
     }
     visit_FuncDeclStmNode(node: FuncDeclStmNode): void {
+        const arg_registers = [
+            "rdi","rsi","rdx","rcx","r8","r9"
+        ]
+        let func_name = node.func_name
+        let params = node.params
+        let body = node.body
+        
         this.nasm.add_label(`${node.func_name}`)
         this.nasm.text(`push rbp`)
         this.nasm.text(`mov rbp, rsp`)
-        this.visit(node.body)
+
+        this.current_scope = this.symbol_manager.get_scope(body.uid)
+        // params filling
+        let offset: number
+        for (let i = 0; i < params.length; i++) {
+            offset = this.stack_frame_manager.add_var(params[i].name)
+            this.nasm.text(`mov [rbp-${offset}], ${arg_registers[i]}`)
+        }
+        // function body
+        body.children.forEach(stm => {
+            this.visit(stm)
+        })
+        this.current_scope = this.current_scope?.parent_scope!
+
+        // clear all local vars in stack frame manager
+        this.stack_frame_manager.clear()
+
         this.nasm.text(`xor rax, rax`)
         this.nasm.text(`mov rsp, rbp`)
         this.nasm.text(`pop rbp`)
@@ -333,20 +353,14 @@ export class Linux_x86_64 implements INodeVisitor {
             "rdi","rsi","rdx","rcx","r8","r9"
         ]
 
-        const defined_func = this.current_scope?.get(func_name)
-
-        if (defined_func === undefined) {
-            throw new Error ("Function dont exist")
-        }
-
         if(args.length <= arg_registers.length) {
             this.nasm.text(`; ------ funccall -> ${func_name}`)
             // saving current arg registers
             for(let i = 0; i < args.length; i++) {
                 this.nasm.text(`push ${arg_registers[i]}`)
             }
-            this.nasm.text(`sub rsp, 16`)
             // filling new arg registers
+            this.nasm.text(`sub rsp, 16`)
             for (let i = 0; i < args.length; i++) {
                 this.visit(args[i])
                 this.nasm.text(`mov ${arg_registers[i]}, rax`)

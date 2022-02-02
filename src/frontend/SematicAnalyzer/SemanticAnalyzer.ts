@@ -12,11 +12,9 @@ export class SemanticAnalyzer implements INodeVisitor {
     symbol_manager: SymbolManager
     private current_scope: SymbolTable | null = null
     private current_type: TypeNode | null = null
-    private is_func_now: boolean
     constructor(ast: AstNode, symbol_manager: SymbolManager) {
         this.ast = ast
         this.symbol_manager = symbol_manager
-        this.is_func_now = false
     }
     private eat_type(type: TypeNode | null): void {
         // clearing current_type (success type checking case)
@@ -53,13 +51,12 @@ export class SemanticAnalyzer implements INodeVisitor {
 
     }
     visit_BlockStmNode(node: BlockStmNode): void {
-        
         // creating new scope
         this.current_scope = this.symbol_manager.new_scope(
             node.uid,
             this.current_scope?.nesting_lvl!+1,
             this.current_scope,
-            (this.is_func_now ? ScopeTypes.func_scope : ScopeTypes.default_scope)
+            ScopeTypes.default_scope
         )
 
         node.children.forEach(stm => {
@@ -69,7 +66,6 @@ export class SemanticAnalyzer implements INodeVisitor {
 
         // come back to parent scope
         this.current_scope = this.current_scope.parent_scope
-
     }
     visit_AssignStmNode(node: AssignStmNode): void {
         let var_name: string = node.name
@@ -135,16 +131,32 @@ export class SemanticAnalyzer implements INodeVisitor {
                 );
         }
 
+        const func_symbol = new FuncSymbol(func_name)
+        func_symbol.params = node.params
+
+        // push new func symbol in global scope
+        this.current_scope?.set(func_name, func_symbol)
+        
+        // creating new scope
+        this.current_scope = this.symbol_manager.new_scope(
+            node.body.uid,
+            this.current_scope?.nesting_lvl!+1,
+            this.current_scope,
+            ScopeTypes.func_scope
+        )
+        
+        // filling params in func scope
         node.params.forEach(param => {
             this.current_scope?.set(param.name, new VarSymbol(param.name, param.type))
         })
-        
-        this.is_func_now = true
-        this.visit(node.body)
-        this.is_func_now = false
-        
-        this.current_scope?.set(func_name, new FuncSymbol(func_name))
 
+        node.body.children.forEach(stm => {
+            this.eat_type(null)
+            this.visit(stm)
+        })
+
+        // come back to parent scope
+        this.current_scope = this.current_scope.parent_scope        
     }
     visit_ReturnStmNode(node: ReturnStmNode): void {
         this.visit(node.expr)

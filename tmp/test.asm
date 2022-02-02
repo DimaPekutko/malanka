@@ -1301,20 +1301,18 @@
 segment .text
 global _start
 _start:
-	; ------ funccall -> my_func
-	sub rsp, 16
-	xor rax, rax
-	call my_func
-	add rsp, 16
-	; ------ funccall end -> my_func
-	mov [b], rax
 	; ------ funccall -> printf
 	push rdi
 	push rsi
 	sub rsp, 16
-	mov rax, str_vwdMMouvo6
+	mov rax, str_NV5qEf9GnW
 	mov rdi, rax
-	mov rax, [b]
+	; ------ funccall -> a
+	sub rsp, 16
+	xor rax, rax
+	call a
+	add rsp, 16
+	; ------ funccall end -> a
 	mov rsi, rax
 	xor rax, rax
 	call printf
@@ -1326,32 +1324,27 @@ _start:
 	mov rax, 60
 	xor rdi, rdi
 	syscall
+b:
+	push rbp
+	mov rbp, rsp
+	mov [rbp-8], rdi
+	mov rax, 4
+	mov rsp, rbp
+	pop rbp
+	ret
+	xor rax, rax
+	mov rsp, rbp
+	pop rbp
+	ret
 a:
 	push rbp
 	mov rbp, rsp
-	mov rax, 100
-	mov rsp, rbp
-	pop rbp
-	ret
-	xor rax, rax
-	mov rsp, rbp
-	pop rbp
-	ret
-my_func:
-	push rbp
-	mov rbp, rsp
-	mov rax, 3
-	mov [rbp-4], rax
-	; ------ funccall -> a
-	push rdi
+	; ------ funccall -> b
 	sub rsp, 16
-	mov rax, [rbp-4]
-	mov rdi, rax
 	xor rax, rax
-	call a
+	call b
 	add rsp, 16
-	pop rdi
-	; ------ funccall end -> a
+	; ------ funccall end -> b
 	mov rsp, rbp
 	pop rbp
 	ret
@@ -1360,8 +1353,7 @@ my_func:
 	pop rbp
 	ret
 segment .bss
-	b resb 8
 segment .data
 	TRUE db 1
 	FALSE db 0
-	str_vwdMMouvo6 db "%d",0xa,0
+	str_NV5qEf9GnW db "%d",0xa,0
