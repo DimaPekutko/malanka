@@ -1,4 +1,4 @@
-import { SymbolTable } from './../../frontend/SymbolManager';
+import { ScopeTypes, SymbolTable } from 'frontend/SymbolManager';
 import { SharedLibManager, LogManager, uid, dump, exit } from './../../utils';
 import { SymbolManager } from 'frontend/SymbolManager';
 import { writeFileSync } from "fs"
@@ -8,9 +8,9 @@ import path from "path"
 import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode } from "frontend/AST/AST";
 import { INodeVisitor } from "frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "frontend/SyntaxAnalyzer/Tokens";
+import { throws } from 'assert';
 
 // import { } from ""
-
 
 class NasmWriter {
     private _extern: string = ``
@@ -18,7 +18,7 @@ class NasmWriter {
     private _bss: string = `segment .bss`
     private _data: string = `segment .data`
     private _label_counter: number = 0
-    buffer_label: string = ""
+    buffer_label: string = ""    
     extern(source: string): void {
         this._extern += ("\n\t"+source)
     }
@@ -41,6 +41,27 @@ class NasmWriter {
     }
     get_source(): string {
         return this._extern+"\n"+this._text+"\n"+this._bss+"\n"+this._data
+    }    
+}
+
+class StackFrameManager {
+    private symbols: Map<string, number> 
+    private local_var_offset: number
+    constructor() {
+        this.symbols = new Map()
+        this.local_var_offset = 0
+    }
+    add_var(name: string, size: number = 4): number {
+        this.local_var_offset += size
+        this.symbols.set(name, this.local_var_offset)
+        return this.local_var_offset
+    }
+    get_var_offset(name: string): number {
+        return this.symbols.get(name)!
+    }
+    clear(): void {
+        this.symbols.clear()
+        this.local_var_offset = 0
     }
 }
 
@@ -48,12 +69,14 @@ export class Linux_x86_64 implements INodeVisitor {
     ast: AstNode
     symbol_manager: SymbolManager
     output_filename: string
+    stack_frame_manager: StackFrameManager
     nasm: NasmWriter
     current_scope: SymbolTable | null = null
     constructor(ast: AstNode, symbol_manager: SymbolManager, output_filename: string) {
         this.ast = ast
         this.symbol_manager = symbol_manager
         this.output_filename = path.join(output_filename)
+        this.stack_frame_manager = new StackFrameManager()
         this.nasm = new NasmWriter();
     }
     fill_extern_symbols(): void {
@@ -96,6 +119,9 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     visit_BlockStmNode(node: BlockStmNode): void {
         this.current_scope = this.symbol_manager.get_scope(node.uid)
+        if (this.current_scope?.SCOPE_TYPE === ScopeTypes.func_scope) {
+            this.stack_frame_manager.clear()
+        } 
         node.children.forEach(stm => {
             this.visit(stm)
         })
@@ -104,7 +130,15 @@ export class Linux_x86_64 implements INodeVisitor {
     visit_AssignStmNode(node: AssignStmNode): void {
         let var_name: string = node.name
         this.visit(node.value)
-        this.nasm.text(`mov [${var_name}], rax`)
+        // var in function
+        if (this.current_scope?.is_nested_in_func_scope(var_name)) {
+            let offset = this.stack_frame_manager.get_var_offset(var_name)
+            this.nasm.text(`mov [rbp-${offset}], rax`)
+        }
+        // var in global scope
+        else {
+            this.nasm.text(`mov [${var_name}], rax`)
+        }
     }
     visit_BinOpNode(node: BinOpNode): void {
         this.nasm.add_label(this.nasm.gen_label("BINOP_START"))
@@ -266,14 +300,30 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     visit_VarDeclStmNode(node: VarDeclStmNode): void {
         let var_name: string = node.var_name
-        this.visit(node.init_value)
-        this.nasm.bss(`${var_name} resb 8`)
-        this.nasm.text(`mov [${var_name}], rax`)
+        this.visit(node.init_value)     // generate: mov rax, init_value
+
+        // var declaration in function
+        if (this.current_scope?.is_nested_in_func_scope(var_name)) {
+            let offset = this.stack_frame_manager.add_var(var_name)
+            this.nasm.text(`mov [rbp-${offset}], rax`)
+        }
+        // var declaration in global scope
+        else {
+            this.nasm.bss(`${var_name} resb 8`)
+            this.nasm.text(`mov [${var_name}], rax`)
+        }        
     }
     visit_VarNode(node: VarNode): void {
-        let name = node.name
-        // this.nasm.text(`; push var to stack`)
-        this.nasm.text(`mov rax, [${name}]`)
+        let var_name = node.name
+        // var in function
+        if (this.current_scope?.is_nested_in_func_scope(var_name)) {
+            let offset = this.stack_frame_manager.get_var_offset(var_name)
+            this.nasm.text(`mov rax, [rbp-${offset}]`)
+        }
+        // var in global scope
+        else {
+            this.nasm.text(`mov rax, [${var_name}]`)
+        }
     }
     visit_FuncCallStmNode(node: FuncCallStmNode): void {
         const func_name = node.func_name
@@ -292,18 +342,21 @@ export class Linux_x86_64 implements INodeVisitor {
         if(args.length <= arg_registers.length) {
             this.nasm.text(`; ------ funccall -> ${func_name}`)
             // saving current arg registers
-            for(let i = 0; i < arg_registers.length; i++) {
+            for(let i = 0; i < args.length; i++) {
                 this.nasm.text(`push ${arg_registers[i]}`)
             }
+            this.nasm.text(`sub rsp, 16`)
             // filling new arg registers
             for (let i = 0; i < args.length; i++) {
                 this.visit(args[i])
                 this.nasm.text(`mov ${arg_registers[i]}, rax`)
             }
+            this.nasm.text(`xor rax, rax`)
             // calling current function
             this.nasm.text(`call ${func_name}`)
+            this.nasm.text(`add rsp, 16`)
             // pop up old arg registers
-            for(let i = arg_registers.length-1; i >= 0; i--) {
+            for(let i = args.length-1; i >= 0; i--) {
                 this.nasm.text(`pop ${arg_registers[i]}`)
             }
             this.nasm.text(`; ------ funccall end -> ${func_name}`)

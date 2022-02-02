@@ -1,5 +1,5 @@
 import { dump, SharedLibManager, LogManager } from 'utils';
-import { TypeNode } from './AST/AST';
+import { TypeNode, ParamNode } from './AST/AST';
 
 
 export abstract class Symbol {
@@ -17,9 +17,11 @@ export class VarSymbol extends Symbol {
 }
 
 export class FuncSymbol extends Symbol {
+    params: ParamNode[]
     constructor(name: string) {
         super()
         this.name = name
+        this.params = []
     }
 }
 
@@ -31,16 +33,23 @@ export class TypeSymbol extends Symbol {
     }
 }
 
+export abstract class ScopeTypes {
+    static readonly "default_scope" = "default_scope"
+    static readonly "func_scope" = "func_scope"
+}
+
 export class SymbolTable {
+    readonly SCOPE_TYPE: ScopeTypes
     readonly symbols: Map<string, Symbol>
     readonly uid: string
     readonly nesting_lvl: number
     readonly parent_scope: SymbolTable | null = null
-    constructor(uid: string, nesting_lvl: number, parent_scope: SymbolTable | null) {
+    constructor(uid: string, nesting_lvl: number, parent_scope: SymbolTable | null, type: ScopeTypes) {
         this.symbols = new Map()    
         this.uid = uid
         this.nesting_lvl = nesting_lvl
         this.parent_scope = parent_scope
+        this.SCOPE_TYPE = type
     }
     get(name: string): Symbol | null {
         let cur_scope: SymbolTable | null = this
@@ -61,19 +70,29 @@ export class SymbolTable {
     set(name: string, value: Symbol): void {
         this.symbols.set(name, value)
     }
+    is_nested_in_func_scope(name: string): boolean {
+        let cur_scope: SymbolTable | null = this
+        let symbol
+        while(cur_scope !== null) {
+            symbol = cur_scope.symbols.get(name)
+            if (symbol !== undefined && cur_scope.SCOPE_TYPE === ScopeTypes.func_scope) {
+                return true
+            }
+            cur_scope = cur_scope.parent_scope
+        }
+        return false
+    }
 }
 
 export class SymbolManager {
     readonly SCOPES: SymbolTable[]
-    // readonly GLOBAL_SCOPE: SymbolTable
-    // readonly FUNC_SCOPES: SymbolTable[]
     readonly shared_libs_list: string[]
     constructor() {
         this.SCOPES = []
         this.shared_libs_list = []
     }
-    new_scope(uid: string, nesting_lvl: number, parent_scope: SymbolTable | null): SymbolTable {
-        const new_scope = new SymbolTable(uid, nesting_lvl, parent_scope)
+    new_scope(uid: string, nesting_lvl: number, parent_scope: SymbolTable | null, type: ScopeTypes = ScopeTypes.default_scope): SymbolTable {
+        const new_scope = new SymbolTable(uid, nesting_lvl, parent_scope, type)
         this.SCOPES.push(new_scope)
         return this.SCOPES[this.SCOPES.length-1]
     }

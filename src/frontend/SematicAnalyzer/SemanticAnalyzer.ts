@@ -1,6 +1,6 @@
 import { is_float, is_int } from './../../utils';
 import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode } from './../AST/AST';
-import { TypeSymbol, FuncSymbol, SymbolTable } from './../SymbolManager';
+import { TypeSymbol, FuncSymbol, SymbolTable, ScopeTypes } from './../SymbolManager';
 import { LogManager, dump } from 'utils';
 import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from 'frontend/AST/AST';
 import { INodeVisitor } from 'frontend/AST/INodeVisitor';
@@ -12,9 +12,11 @@ export class SemanticAnalyzer implements INodeVisitor {
     symbol_manager: SymbolManager
     private current_scope: SymbolTable | null = null
     private current_type: TypeNode | null = null
+    private is_func_now: boolean
     constructor(ast: AstNode, symbol_manager: SymbolManager) {
         this.ast = ast
         this.symbol_manager = symbol_manager
+        this.is_func_now = false
     }
     private eat_type(type: TypeNode | null): void {
         // clearing current_type (success type checking case)
@@ -56,7 +58,8 @@ export class SemanticAnalyzer implements INodeVisitor {
         this.current_scope = this.symbol_manager.new_scope(
             node.uid,
             this.current_scope?.nesting_lvl!+1,
-            this.current_scope
+            this.current_scope,
+            (this.is_func_now ? ScopeTypes.func_scope : ScopeTypes.default_scope)
         )
 
         node.children.forEach(stm => {
@@ -136,7 +139,9 @@ export class SemanticAnalyzer implements INodeVisitor {
             this.current_scope?.set(param.name, new VarSymbol(param.name, param.type))
         })
         
+        this.is_func_now = true
         this.visit(node.body)
+        this.is_func_now = false
         
         this.current_scope?.set(func_name, new FuncSymbol(func_name))
 
@@ -181,16 +186,20 @@ export class SemanticAnalyzer implements INodeVisitor {
     visit_FuncCallStmNode(node: FuncCallStmNode): void {
         let func_name = node.func_name
         let args = node.args
-        if (this.current_scope?.get(func_name) === null) {
+        let defined_func = this.current_scope?.get(func_name)
+        if (defined_func === null) {
             LogManager.error(
                 `Symbol ${func_name} did not declared.`,
                 "SemanticAnalyzer.ts"
             )
         }
-        args.forEach(arg => {
-            this.eat_type(null)
-            this.visit(arg)
-        })
+        if (defined_func instanceof FuncSymbol) {
+            // checking funccall rules if defined_func is user defined function only
+            args.forEach(arg => {
+                this.eat_type(null)
+                this.visit(arg)
+            })
+        }
     }
     visit_SharedImpStmNode(node: SharedImpStmNode): void {
         if (this.current_scope?.nesting_lvl !== 0) {

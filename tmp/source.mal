@@ -1,12 +1,14 @@
-// import libc library dynamically for using printf
-
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
-n @int = 228
-
-
-.func @int # n @int:
-    n = 2
+.a @int:
+    !100
 end
 
-printf("%d", n)
+.my_func @int:
+    c @int = 3
+    !a(c)
+end
+
+b @int =  my_func()
+
+printf("%d", b)

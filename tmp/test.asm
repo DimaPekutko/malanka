@@ -1301,24 +1301,24 @@
 segment .text
 global _start
 _start:
-	mov rax, 228
-	mov [n], rax
+	; ------ funccall -> my_func
+	sub rsp, 16
+	xor rax, rax
+	call my_func
+	add rsp, 16
+	; ------ funccall end -> my_func
+	mov [b], rax
 	; ------ funccall -> printf
 	push rdi
 	push rsi
-	push rdx
-	push rcx
-	push r8
-	push r9
-	mov rax, str_n4ZLWn4BHl
+	sub rsp, 16
+	mov rax, str_vwdMMouvo6
 	mov rdi, rax
-	mov rax, [n]
+	mov rax, [b]
 	mov rsi, rax
+	xor rax, rax
 	call printf
-	pop r9
-	pop r8
-	pop rcx
-	pop rdx
+	add rsp, 16
 	pop rsi
 	pop rdi
 	; ------ funccall end -> printf
@@ -1326,18 +1326,42 @@ _start:
 	mov rax, 60
 	xor rdi, rdi
 	syscall
-func:
+a:
 	push rbp
 	mov rbp, rsp
-	mov rax, 2
-	mov [n], rax
+	mov rax, 100
+	mov rsp, rbp
+	pop rbp
+	ret
+	xor rax, rax
+	mov rsp, rbp
+	pop rbp
+	ret
+my_func:
+	push rbp
+	mov rbp, rsp
+	mov rax, 3
+	mov [rbp-4], rax
+	; ------ funccall -> a
+	push rdi
+	sub rsp, 16
+	mov rax, [rbp-4]
+	mov rdi, rax
+	xor rax, rax
+	call a
+	add rsp, 16
+	pop rdi
+	; ------ funccall end -> a
+	mov rsp, rbp
+	pop rbp
+	ret
 	xor rax, rax
 	mov rsp, rbp
 	pop rbp
 	ret
 segment .bss
-	n resb 8
+	b resb 8
 segment .data
 	TRUE db 1
 	FALSE db 0
-	str_n4ZLWn4BHl db "%d",0xa,0
+	str_vwdMMouvo6 db "%d",0xa,0
