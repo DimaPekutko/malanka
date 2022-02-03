@@ -1,10 +1,7 @@
 # Malanka (programming language)
 
-```diff
-! Linux x86-64 only
-```
 
-Malanka is a compiled, statically typed general purpose programming language written in TypeScript and similar to C, Ruby, and Typescript itself.
+Malanka is a compiled, statically typed general purpose programming language written in TypeScript and similar to C, Ruby, and Typescript itself. 
 
 ## Hello World
 ```
@@ -14,7 +11,9 @@ dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 // print a message
 printf("Hello, World!")
 ```
-
+## Supported platforms
+You can run it only on these platforms
+- [x] Linux x86-64
 ## Installation
 Malanka requires npm to be installed on your machine.
 
@@ -79,7 +78,6 @@ end
 for j @int = 0; j < 10; j = j + 1:
     printf("loop me")
 end
-```
 
 // function example
 .foo @doub # a @int, b @int:
@@ -92,6 +90,7 @@ end
 
 // funcion call
 foo(543, 2135)
+```
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
