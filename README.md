@@ -11,9 +11,6 @@ dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 // print a message
 printf("Hello, World!")
 ```
-## Supported platforms
-You can run it only on these platforms
-- [x] Linux x86-64
 ## Installation
 Malanka requires npm to be installed on your machine.
 
@@ -92,5 +89,8 @@ end
 foo(543, 2135)
 ```
 
+## Supported platforms
+You can run it only on these platforms:
+- [x] Linux x86-64
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
