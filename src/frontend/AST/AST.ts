@@ -43,30 +43,27 @@ export class AssignStmNode extends AstStatementNode {
 }
 
 
-interface TypedAstNode {
-    type: TypeNode  // should be specifyed in semantic analyzer
+export abstract class TypedAstNode extends AstNode {
+    type!: TypeNode  // should be specifyed in semantic analyzer
 }
 
-export class LiteralNode extends AstNode implements TypedAstNode {
-    type!: TypeNode
+export class LiteralNode extends TypedAstNode {
     constructor(token: Token) {
         super()
         this.token = token
     }
 }
-export class VarNode extends AstNode implements TypedAstNode {
+export class VarNode extends TypedAstNode {
     name: string
-    type!: TypeNode
     constructor(name: string) {
         super()
         this.name = name
     }
 }
 
-export class BinOpNode extends AstNode implements TypedAstNode {
+export class BinOpNode extends TypedAstNode {
     left: AstNode
     right: AstNode
-    type!: TypeNode 
     constructor(left: AstNode, op: Token, right: AstNode) {
         super()
         this.left = left
@@ -75,9 +72,8 @@ export class BinOpNode extends AstNode implements TypedAstNode {
     }
 }
 
-export class UnOpNode extends AstNode implements TypedAstNode {
+export class UnOpNode extends TypedAstNode {
     left: AstNode
-    type!: TypeNode
     constructor(op: Token, left: AstNode) {
         super()
         this.left = left
@@ -147,19 +143,17 @@ export class FuncDeclStmNode extends AstStatementNode {
     }
 }
 
-export class ReturnStmNode extends AstStatementNode implements TypedAstNode {
+export class ReturnStmNode extends TypedAstNode {
     expr: AstNode
-    type!: TypeNode
     constructor(expr: AstNode) {
         super()
         this.expr = expr
     }
 }
 
-export class FuncCallStmNode extends AstStatementNode implements TypedAstNode {
+export class FuncCallStmNode extends TypedAstNode {
     func_name: string
     args: AstNode[]
-    type!: TypeNode
     constructor(func_name: string, args: AstNode[]) {
         super()
         this.func_name = func_name

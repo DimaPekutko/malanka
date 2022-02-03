@@ -1,9 +1,2 @@
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
-.a @doub # f @doub:
-    ! f/2.1
-end
-
-b @doub = a(3.14)
-
-printf("hello =>  %f | %d | %f | %d", b, 1, 4.555, 32)

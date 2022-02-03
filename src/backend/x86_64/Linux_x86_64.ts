@@ -7,7 +7,7 @@ import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 
-import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode } from "frontend/AST/AST";
+import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode, TypedAstNode } from "frontend/AST/AST";
 import { INodeVisitor } from "frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "frontend/SyntaxAnalyzer/Tokens";
 import { throws } from 'assert';
@@ -418,57 +418,66 @@ export class Linux_x86_64 implements INodeVisitor {
         const func_name = node.func_name
         let args = node.args
         
-        const arg_registers = [
+        let default_registers = [
             "rdi","rsi","rdx","rcx","r8","r9"
+            //str  n     fact
         ]
 
-        const float_arg_registers = [
+        let float_registers = [
             "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5"
         ]
 
-        if(args.length <= arg_registers.length) {
+        if(args.length <= default_registers.length) {
             this.nasm.text(`; ------ funccall -> ${func_name}`)
-            let int_args_index = 0
-            let float_args_index = 0
-            // if argument is another func call (should be at the beginning)
-            for (let i = 0; i < arg_registers.length; i++) {
-                let arg = args[i]
-                if (arg instanceof FuncCallStmNode) {
-                    this.visit(args[i])
-                    if (arg.type.name === DATA_TYPES.doub) {
-                        this.nasm.text(`movq ${float_arg_registers[float_args_index]}, rax`)   
-                        float_args_index++
-                    }
-                    else {
-                        this.nasm.text(`mov ${arg_registers[int_args_index]}, rax`)
-                        this.nasm.text(`mov ${arg_registers[int_args_index]}, rax`)
-                        int_args_index++
-                    }
-                }
-            }
 
-            // if arguments is not funccall
-            for (let i = 0; i < args.length; i++) {
-                let arg = args[i]
-                if (arg instanceof LiteralNode || 
-                    arg instanceof BinOpNode ||
-                    arg instanceof UnOpNode ||
-                    arg instanceof VarNode
-                ) {
-                    this.visit(arg)
-                    if (arg.type.name === DATA_TYPES.doub) {
-                        this.nasm.text(`movq ${float_arg_registers[float_args_index]}, rax`)   
-                        float_args_index++
+            let default_args: AstNode[] = []
+            let float_args: AstNode[] = []
+            args.forEach(arg => {
+                if (arg instanceof TypedAstNode) {
+                    if (arg.type.name !== DATA_TYPES.doub) {
+                        default_args.push(arg)
                     }
                     else {
-                        this.nasm.text(`mov ${arg_registers[int_args_index]}, rax`)
-                        int_args_index++
+                        float_args.push(arg)
                     }
                 }
-            }
+            })
+
+            // default typed funccalls
+            default_args.forEach((arg, i) => {
+                if (arg instanceof FuncCallStmNode) {
+                    this.visit(arg)
+                    this.nasm.text(`mov ${default_registers[i]}, rax`)
+                    default_registers.splice(i,1)
+                }
+            })
+
+            // float typed funccalls
+            float_args.forEach((arg, i) => {
+                if (arg instanceof FuncCallStmNode) {
+                    this.visit(arg)
+                    this.nasm.text(`movq ${float_registers[i]}, rax`)
+                    float_registers.splice(i,1)
+                }
+            })
+
+            // default typed arguments
+            default_args.forEach((arg, i) => {
+                if (!(arg instanceof FuncCallStmNode)) {
+                    this.visit(arg)
+                    this.nasm.text(`mov ${default_registers.shift()}, rax`)
+                }
+            })
+
+            // float typed arguments
+            float_args.forEach((arg, i) => {
+                if (!(arg instanceof FuncCallStmNode)) {
+                    this.visit(arg)
+                    this.nasm.text(`movq ${float_registers.shift()}, rax`)
+                }
+            })
             this.nasm.text(`sub rsp, 16`)
-            this.nasm.text(`mov rax, ${float_args_index}`)
-            // calling current function
+            this.nasm.text(`mov rax, ${float_args.length}`)
             this.nasm.text(`call ${func_name}`)
             this.nasm.text(`add rsp, 16`)
             this.nasm.text(`; ------ funccall end -> ${func_name}`)
@@ -502,7 +511,6 @@ export class Linux_x86_64 implements INodeVisitor {
         this.link_obj()
 
         LogManager.success(`Run by: ${"./"+this.output_filename}.`)
-        // this.run_binary()
     }
     private compile_nasm(): void {
         try {
