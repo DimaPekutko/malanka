@@ -4,7 +4,7 @@
 Malanka is a compiled, statically typed general purpose programming language written in TypeScript and similar to C, Ruby, and Typescript itself. 
 
 ## Hello World
-```
+```java
 // import libc for printf
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
@@ -25,7 +25,7 @@ npm i
 
 ## Usage
 Edit tmp/source.mal file:
-```
+```java
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
 a @int = 1337
@@ -55,7 +55,7 @@ What is currently available:
 - [x] Symbol scopes
 
 ## Example of all features
-```
+```java
 // import libc for printf
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
