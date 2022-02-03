@@ -144,6 +144,7 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     gen_arithmetic_op(op_type: TokenType, is_float_op: boolean): void {
         let buffer_mem = this.stack_frame_manager.BUFFER_MEM_NAME
+        // ---- mov rax fpu stack
         this.nasm.text(`mov [${buffer_mem}], rax`)
         if (is_float_op) {
             this.nasm.text(`fld qword [${buffer_mem}]`)
@@ -151,6 +152,7 @@ export class Linux_x86_64 implements INodeVisitor {
         else {
             this.nasm.text(`fild qword [${buffer_mem}]`)
         }
+        // ---- mov rbx fpu stack
         this.nasm.text(`mov [${buffer_mem}], rbx`)
         if (is_float_op) {
             this.nasm.text(`fld qword [${buffer_mem}]`)
@@ -158,6 +160,7 @@ export class Linux_x86_64 implements INodeVisitor {
         else {
             this.nasm.text(`fild qword [${buffer_mem}]`)
         }
+        // ---- write operation
         if (op_type === TOKEN_TYPES.plus_op) {
             this.nasm.text(`fadd`)
         }
@@ -170,7 +173,13 @@ export class Linux_x86_64 implements INodeVisitor {
         else if (op_type === TOKEN_TYPES.div_op) {
             this.nasm.text(`fdiv`)
         }
-        this.nasm.text(`fistp qword [${buffer_mem}]`)
+        // ---- get op result from fpu stack
+        if (is_float_op) {
+            this.nasm.text(`fstp qword [${buffer_mem}]`)
+        }
+        else {
+            this.nasm.text(`fistp qword [${buffer_mem}]`)
+        }
         this.nasm.text(`mov rax, [${buffer_mem}]`)
     }
     gen_logic_op(op_type: TokenType): void {
@@ -250,10 +259,17 @@ export class Linux_x86_64 implements INodeVisitor {
         this.nasm.add_label(this.nasm.gen_label("BINOP_END"))
     }
     visit_UnOpNode(node: UnOpNode): void {
-        this.visit(node.left)
+        this.visit(node.left) // generate: mov rax, expr
         if (node.token.type === TOKEN_TYPES.minus_op) {
-            this.nasm.text("not rax")
-            this.nasm.text("inc rax")
+            if (node.type.name === DATA_TYPES.int) {
+                this.nasm.text("not rax")
+                this.nasm.text("inc rax")
+            }
+            else {
+                this.nasm.text("mov rbx, rax")
+                this.nasm.text("mov rax, 0")
+                this.gen_arithmetic_op(TOKEN_TYPES.minus_op,true)
+            }
         }
     }
     visit_LiteralNode(node: LiteralNode): void {
@@ -324,6 +340,9 @@ export class Linux_x86_64 implements INodeVisitor {
         const arg_registers = [
             "rdi","rsi","rdx","rcx","r8","r9"
         ]
+        const float_arg_registers = [
+            "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5"
+        ]
         let func_name = node.func_name
         let params = node.params
         let body = node.body
@@ -335,9 +354,18 @@ export class Linux_x86_64 implements INodeVisitor {
         this.current_scope = this.symbol_manager.get_scope(body.uid)
         // params filling
         let offset: number
+        let int_args_index = 0
+        let float_args_index = 0
         for (let i = 0; i < params.length; i++) {
             offset = this.stack_frame_manager.add_var(params[i].name)
-            this.nasm.text(`mov [rbp-${offset}], ${arg_registers[i]}`)
+            if (params[i].type.name !== DATA_TYPES.doub) {
+                this.nasm.text(`mov [rbp-${offset}], ${arg_registers[int_args_index]}`)
+                int_args_index++
+            }
+            else {
+                this.nasm.text(`movq [rbp-${offset}], ${float_arg_registers[float_args_index]}`)
+                float_args_index++
+            }
         }
         // function body
         body.children.forEach(stm => {
@@ -388,41 +416,61 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     visit_FuncCallStmNode(node: FuncCallStmNode): void {
         const func_name = node.func_name
-        const args = node.args
+        let args = node.args
         
         const arg_registers = [
             "rdi","rsi","rdx","rcx","r8","r9"
         ]
 
+        const float_arg_registers = [
+            "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5"
+        ]
+
         if(args.length <= arg_registers.length) {
             this.nasm.text(`; ------ funccall -> ${func_name}`)
-            // saving current arg registers
-            for(let i = 0; i < args.length; i++) {
-                // this.nasm.text(`push ${arg_registers[i]}`)
-            }
-            // this.nasm.text(`add rsp, 0x8*${arg.length}`)
-            // filling new arg registers
+            let int_args_index = 0
+            let float_args_index = 0
+            // if argument is another func call (should be at the beginning)
             for (let i = 0; i < arg_registers.length; i++) {
-                if (args[i] instanceof FuncCallStmNode) {
+                let arg = args[i]
+                if (arg instanceof FuncCallStmNode) {
                     this.visit(args[i])
-                    this.nasm.text(`mov ${arg_registers[i]}, rax`)    
+                    if (arg.type.name === DATA_TYPES.doub) {
+                        this.nasm.text(`movq ${float_arg_registers[float_args_index]}, rax`)   
+                        float_args_index++
+                    }
+                    else {
+                        this.nasm.text(`mov ${arg_registers[int_args_index]}, rax`)
+                        this.nasm.text(`mov ${arg_registers[int_args_index]}, rax`)
+                        int_args_index++
+                    }
                 }
             }
+
+            // if arguments is not funccall
             for (let i = 0; i < args.length; i++) {
-                if (!(args[i] instanceof FuncCallStmNode)) {
-                    this.visit(args[i])
-                    this.nasm.text(`mov ${arg_registers[i]}, rax`)    
+                let arg = args[i]
+                if (arg instanceof LiteralNode || 
+                    arg instanceof BinOpNode ||
+                    arg instanceof UnOpNode ||
+                    arg instanceof VarNode
+                ) {
+                    this.visit(arg)
+                    if (arg.type.name === DATA_TYPES.doub) {
+                        this.nasm.text(`movq ${float_arg_registers[float_args_index]}, rax`)   
+                        float_args_index++
+                    }
+                    else {
+                        this.nasm.text(`mov ${arg_registers[int_args_index]}, rax`)
+                        int_args_index++
+                    }
                 }
             }
             this.nasm.text(`sub rsp, 16`)
-            this.nasm.text(`xor rax, rax`)
+            this.nasm.text(`mov rax, ${float_args_index}`)
             // calling current function
             this.nasm.text(`call ${func_name}`)
             this.nasm.text(`add rsp, 16`)
-            // pop up current arg registers
-            for(let i = args.length-1; i >= 0; i--) {
-                // this.nasm.text(`pop ${arg_registers[i]}`)
-            }
             this.nasm.text(`; ------ funccall end -> ${func_name}`)
         }
         else {

@@ -84,10 +84,12 @@ export class SemanticAnalyzer implements INodeVisitor {
     }
     visit_UnOpNode(node: UnOpNode): void {
         this.visit(node.left)
+        node.type = this.current_type!
     }
     visit_LiteralNode(node: LiteralNode): void {
         let value = node.token.value
         this.eat_type(node.type)
+        // type for current literal node filled in parser
     }
     visit_IfStmNode(node: IfStmNode): void {
         if (node.condition !== null) {
@@ -120,7 +122,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         }
         
 
-        const func_symbol = new FuncSymbol(func_name)
+        const func_symbol = new FuncSymbol(func_name, node.ret_type)
         func_symbol.params = node.params
 
         // push new func symbol in global scope
@@ -149,6 +151,7 @@ export class SemanticAnalyzer implements INodeVisitor {
     }
     visit_ReturnStmNode(node: ReturnStmNode): void {
         this.visit(node.expr)
+        node.type = this.current_type!
     }
     visit_VarDeclStmNode(node: VarDeclStmNode): void {
         let var_name = node.var_name
@@ -183,6 +186,9 @@ export class SemanticAnalyzer implements INodeVisitor {
                 "SemanticAnalyzer.ts"
             )
         }
+        else {
+            node.type = defined_var.type
+        }
     }
     visit_FuncCallStmNode(node: FuncCallStmNode): void {
         let func_name = node.func_name
@@ -190,7 +196,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         let defined_func = this.current_scope?.get(func_name)
         if (args.length > 6) {
             LogManager.error(
-                `You can use only < 7 arguments in function call (while).`,
+                `You can use only <= 6 arguments in function call (while).`,
                 "SemanticAnalyzer.ts"
             )
         }
@@ -211,11 +217,19 @@ export class SemanticAnalyzer implements INodeVisitor {
                 }
                 let params = defined_func.params
                 for (let i = 0; i < params.length; i++) {
-                    this.eat_type(null) // clearing current_type 
                     this.visit(args[i]) // setup current_type with current arg type
                     this.eat_type(params[i].type) // compare current_type with current param type
+                    this.eat_type(null) // clearing current_type 
+                }
+                this.eat_type(defined_func.ret_type)
+            }
+            else {
+                for (let i = 0; i < args.length; i++) {
+                    this.visit(args[i])
+                    this.eat_type(null)
                 }
             }
+            node.type = defined_func.ret_type
         }
     }
     visit_SharedImpStmNode(node: SharedImpStmNode): void {

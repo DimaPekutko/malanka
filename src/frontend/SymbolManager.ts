@@ -18,10 +18,12 @@ export class VarSymbol extends Symbol {
 
 export class FuncSymbol extends Symbol {
     params: ParamNode[]
-    constructor(name: string) {
+    ret_type: TypeNode 
+    constructor(name: string, ret_type: TypeNode) {
         super()
         this.name = name
         this.params = []
+        this.ret_type = ret_type
     }
 }
 

@@ -1301,20 +1301,28 @@
 segment .text
 global _start
 _start:
-	; ------ funccall -> printf
-	; ------ funccall -> get_value
-	mov rax, 23
-	mov rdi, rax
+	; ------ funccall -> a
+	mov rax, __float64__(3.14)
+	movq xmm0, rax
 	sub rsp, 16
-	xor rax, rax
-	call get_value
+	mov rax, 1
+	call a
 	add rsp, 16
-	; ------ funccall end -> get_value
-	mov rsi, rax
-	mov rax, str_xnZeciB5aS
+	; ------ funccall end -> a
+	mov [b], rax
+	; ------ funccall -> printf
+	mov rax, str_9f22oigEgO
 	mov rdi, rax
+	mov rax, [b]
+	movq xmm0, rax
+	mov rax, 1
+	mov rsi, rax
+	mov rax, __float64__(4.555)
+	movq xmm1, rax
+	mov rax, 32
+	mov rdx, rax
 	sub rsp, 16
-	xor rax, rax
+	mov rax, 2
 	call printf
 	add rsp, 16
 	; ------ funccall end -> printf
@@ -1322,11 +1330,24 @@ _start:
 	mov rax, 60
 	xor rdi, rdi
 	syscall
-get_value:
+a:
 	push rbp
 	mov rbp, rsp
-	mov [rbp-8], rdi
+	movq [rbp-8], xmm0
+BINOP_START__WdPUy___0:
 	mov rax, [rbp-8]
+	mov rcx, rax
+	mov rax, __float64__(2.1)
+	mov rbx, rax
+	mov rax, rcx
+	mov [buffer_6nTm9], rax
+	fld qword [buffer_6nTm9]
+	mov [buffer_6nTm9], rbx
+	fld qword [buffer_6nTm9]
+	fdiv
+	fstp qword [buffer_6nTm9]
+	mov rax, [buffer_6nTm9]
+BINOP_END__DLtCH___1:
 	mov rsp, rbp
 	pop rbp
 	ret
@@ -1335,8 +1356,9 @@ get_value:
 	pop rbp
 	ret
 segment .bss
+	b resb 8
 segment .data
 	TRUE db 1
 	FALSE db 0
-	buffer_zw9d1 dq 0
-	str_xnZeciB5aS db "hello %d",0xa,0
+	buffer_6nTm9 dq 0
+	str_9f22oigEgO db "hello =>  %f | %d | %f | %d",0xa,0
