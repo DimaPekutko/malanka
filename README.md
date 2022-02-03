@@ -1,4 +1,8 @@
-# Malanka
+# Malanka (programming language)
+
+```diff
+! Linux x86-64 only
+```
 
 Malanka is a compiled, statically typed general purpose programming language written in TypeScript and similar to C, Ruby, and Typescript itself.
 
@@ -45,11 +49,11 @@ What is currently available:
 - [x] Varaibles ```a @type = ...```
 - [x] Complex expressions ```-((2*3/21+--3)-((32/6)*365))```
 - [x] Conditions ```if 2>3: //body end```
-- [x] For loops ```for i @int=0; i < 10; i++: //body end```
+- [x] For loops ```for i @int=0; i < 10; i++: // body end```
 - [ ] Arrays
-- [ ] Functions
-- [ ] Symbol scopes
+- [x] Functions ```.func_name @int # arg1 @int, arg2 @float: // body end```
 - [x] Dynamic imports ```dynamic "your_lib_path"```
+- [x] Symbol scopes
 
 ## Example of all features
 ```
@@ -76,6 +80,18 @@ for j @int = 0; j < 10; j = j + 1:
     printf("loop me")
 end
 ```
+
+// function example
+.foo @doub # a @int, b @int:
+    if a > b:
+        ! 3.14
+    else:
+        ! 2.7
+    end
+end
+
+// funcion call
+foo(543, 2135)
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
