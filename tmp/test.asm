@@ -1302,16 +1302,16 @@ segment .text
 global _start
 _start:
 	; ------ funccall -> printf
-	; ------ funccall -> fact
-	mov rax, 5
+	; ------ funccall -> get_value
+	mov rax, 23
 	mov rdi, rax
 	sub rsp, 16
 	xor rax, rax
-	call fact
+	call get_value
 	add rsp, 16
-	; ------ funccall end -> fact
+	; ------ funccall end -> get_value
 	mov rsi, rax
-	mov rax, str_D5VQL4cYlq
+	mov rax, str_xnZeciB5aS
 	mov rdi, rax
 	sub rsp, 16
 	xor rax, rax
@@ -1322,58 +1322,11 @@ _start:
 	mov rax, 60
 	xor rdi, rdi
 	syscall
-fact:
+get_value:
 	push rbp
 	mov rbp, rsp
 	mov [rbp-8], rdi
-COND_START__azi2P___0:
-BINOP_START__rPhbT___4:
 	mov rax, [rbp-8]
-	mov rcx, rax
-	mov rax, 1
-	mov rbx, rax
-	mov rax, rcx
-COMP_START__QUhGg___5:
-	cmp rax, rbx
-	jl COMP_RIGHT__XQAPi___6
-	xor rax, rax
-	jmp COMP_END__D324F___7
-COMP_RIGHT__XQAPi___6:
-	mov rax, 1
-COMP_END__D324F___7:
-BINOP_END__MdqFG___8:
-	test rax, rax
-	jz IF_END__ysIfm___2
-IF_START__4MIMa___1:
-	mov rax, 0
-	mov rsp, rbp
-	pop rbp
-	ret
-	jmp COND_END__V6SjZ___3
-IF_END__ysIfm___2:
-COND_END__V6SjZ___3:
-BINOP_START__R0TgG___9:
-	; ------ funccall -> fact
-BINOP_START__yzMro___10:
-	mov rax, [rbp-8]
-	mov rcx, rax
-	mov rax, 1
-	mov rbx, rax
-	mov rax, rcx
-	sub rax, rbx
-BINOP_END__gs46A___11:
-	mov rdi, rax
-	sub rsp, 16
-	xor rax, rax
-	call fact
-	add rsp, 16
-	; ------ funccall end -> fact
-	mov rcx, rax
-	mov rax, [rbp-8]
-	mov rbx, rax
-	mov rax, rcx
-	add rax, rbx
-BINOP_END__8r4mp___12:
 	mov rsp, rbp
 	pop rbp
 	ret
@@ -1385,4 +1338,5 @@ segment .bss
 segment .data
 	TRUE db 1
 	FALSE db 0
-	str_D5VQL4cYlq db "Factorial is %d",0xa,0
+	buffer_zw9d1 dq 0
+	str_xnZeciB5aS db "hello %d",0xa,0

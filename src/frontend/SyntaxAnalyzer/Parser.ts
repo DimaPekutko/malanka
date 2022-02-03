@@ -1,8 +1,9 @@
-import { dump } from './../../utils';
+import { dump, is_float, is_int } from './../../utils';
 import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ParamNode, ReturnStmNode } from './../AST/AST';
 import { AstNode, BinOpNode, LiteralNode, UnOpNode } from "frontend/AST/AST"
 import { Token, TokenType, TOKEN_TYPES } from './Tokens'
 import { exit, LogManager } from 'utils';
+import { DATA_TYPES } from 'frontend/DataTypes';
 
 
 export class Parser {
@@ -367,11 +368,21 @@ export class Parser {
         if(this.current_token.type === TOKEN_TYPES.number) {
             this.eat(TOKEN_TYPES.number)
             node = new LiteralNode(cur_token)
+            // int case
+            if (is_int(Number(node.token.value))) {
+                node.token.value = String(node.token.value).split(".")[0]
+                node.type = new TypeNode(DATA_TYPES.int)
+            }
+            // float case
+            else if (is_float(Number(node.token.value))) {
+                node.type = new TypeNode(DATA_TYPES.doub)
+            }
             return node 
         }
         if(this.current_token.type === TOKEN_TYPES.string) {
             this.eat(TOKEN_TYPES.string)
             node = new LiteralNode(cur_token)
+            node.type = new TypeNode(DATA_TYPES.str)
             return node 
         }
         else if(this.current_token.type === TOKEN_TYPES.identifier) {

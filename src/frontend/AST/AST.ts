@@ -73,6 +73,7 @@ export class VarNode extends AstNode {
 export class BinOpNode extends AstNode {
     left: AstNode
     right: AstNode
+    type!: TypeNode  // should be specifyed in semantic analyzer
     constructor(left: AstNode, op: Token, right: AstNode) {
         super()
         this.left = left

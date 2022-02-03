@@ -1,3 +1,5 @@
+import { TokenType } from './../../frontend/SyntaxAnalyzer/Tokens';
+import { DATA_TYPES } from 'frontend/DataTypes';
 import { ScopeTypes, SymbolTable } from 'frontend/SymbolManager';
 import { SharedLibManager, LogManager, uid, dump, exit } from './../../utils';
 import { SymbolManager } from 'frontend/SymbolManager';
@@ -45,11 +47,13 @@ class NasmWriter {
 }
 
 class StackFrameManager {
+    readonly BUFFER_MEM_NAME: string
     private symbols: Map<string, number> 
     private local_var_offset: number
     constructor() {
         this.symbols = new Map()
         this.local_var_offset = 0
+        this.BUFFER_MEM_NAME = "buffer_"+uid(5)
     }
     add_var(name: string, size: number = 8): number {
         this.local_var_offset += size
@@ -89,6 +93,7 @@ export class Linux_x86_64 implements INodeVisitor {
     fill_system_constants(): void {
         this.nasm.data("TRUE db 1")
         this.nasm.data("FALSE db 0")
+        this.nasm.data(`${this.stack_frame_manager.BUFFER_MEM_NAME} dq 0`)
     }
     visit_ProgramNode(node: ProgramNode): void {
         // settting up func decl statements at the end of array
@@ -137,33 +142,39 @@ export class Linux_x86_64 implements INodeVisitor {
             this.nasm.text(`mov [${var_name}], rax`)
         }
     }
-    visit_BinOpNode(node: BinOpNode): void {
-        this.nasm.add_label(this.nasm.gen_label("BINOP_START"))
-
-        this.visit(node.left)   // generate 'mov rax, l_operand'
-        this.nasm.text(`mov rcx, rax`)
-        this.visit(node.right)  // generate 'mov rax, r_operand'
-        this.nasm.text(`mov rbx, rax`)
-        this.nasm.text(`mov rax, rcx`)
-
-        // left operand in rax, right in rbx
-
-        let op_type = node.token.type
+    gen_arithmetic_op(op_type: TokenType, is_float_op: boolean): void {
+        let buffer_mem = this.stack_frame_manager.BUFFER_MEM_NAME
+        this.nasm.text(`mov [${buffer_mem}], rax`)
+        if (is_float_op) {
+            this.nasm.text(`fld qword [${buffer_mem}]`)
+        }
+        else {
+            this.nasm.text(`fild qword [${buffer_mem}]`)
+        }
+        this.nasm.text(`mov [${buffer_mem}], rbx`)
+        if (is_float_op) {
+            this.nasm.text(`fld qword [${buffer_mem}]`)
+        }
+        else {
+            this.nasm.text(`fild qword [${buffer_mem}]`)
+        }
         if (op_type === TOKEN_TYPES.plus_op) {
-            this.nasm.text(`add rax, rbx`)
+            this.nasm.text(`fadd`)
         }
         else if (op_type === TOKEN_TYPES.minus_op) {
-            this.nasm.text(`sub rax, rbx`)
+            this.nasm.text(`fsub`)
         }
         else if (op_type === TOKEN_TYPES.mul_op) {
-            this.nasm.text(`imul rbx`)
+            this.nasm.text(`fmul`)
         }
         else if (op_type === TOKEN_TYPES.div_op) {
-            this.nasm.text(`idiv rbx`)
-            // this.nasm.text(`mov rax, rdx`)
+            this.nasm.text(`fdiv`)
         }
-        // logical ops
-        else if (op_type === TOKEN_TYPES.and_op) {
+        this.nasm.text(`fistp qword [${buffer_mem}]`)
+        this.nasm.text(`mov rax, [${buffer_mem}]`)
+    }
+    gen_logic_op(op_type: TokenType): void {
+        if (op_type === TOKEN_TYPES.and_op) {
             let and_start_label = this.nasm.gen_label("BOOL_AND_START")
             let right_and_label = this.nasm.gen_label("BOOL_AND_RIGHT")
             let and_end_label = this.nasm.gen_label("BOOL_AND_END")
@@ -181,33 +192,60 @@ export class Linux_x86_64 implements INodeVisitor {
         else if (op_type === TOKEN_TYPES.or_op) {
             this.nasm.text(`or rax, rbx`)
         }
-        // comparation ops case
+    }
+    gen_comparation_op(op_type: TokenType): void {
+        let comp_start_label = this.nasm.gen_label("COMP_START")
+        let right_comp_label = this.nasm.gen_label("COMP_RIGHT")
+        let comp_end_label = this.nasm.gen_label("COMP_END")
+        this.nasm.add_label(comp_start_label)
+        this.nasm.text("cmp rax, rbx")
+        if(op_type === TOKEN_TYPES.greater_equal_op) {
+            this.nasm.text(`jge ${right_comp_label}`)
+        }
+        else if(op_type === TOKEN_TYPES.greater_op) {
+            this.nasm.text(`jg ${right_comp_label}`)
+        }
+        else if(op_type === TOKEN_TYPES.less_equal_op) {
+            this.nasm.text(`jle ${right_comp_label}`)
+        }
+        else if(op_type === TOKEN_TYPES.less_op) {
+            this.nasm.text(`jl ${right_comp_label}`)
+        }
+        else if(op_type === TOKEN_TYPES.equal_op) {
+            this.nasm.text(`je ${right_comp_label}`)
+        }
+        this.nasm.text(`xor rax, rax`)
+        this.nasm.text(`jmp ${comp_end_label}`)
+        this.nasm.add_label(right_comp_label)
+        this.nasm.text(`mov rax, 1`)
+        this.nasm.add_label(comp_end_label)
+    }
+    visit_BinOpNode(node: BinOpNode): void {
+        this.nasm.add_label(this.nasm.gen_label("BINOP_START"))
+        this.visit(node.left)   // generate 'mov rax, l_operand'
+        this.nasm.text(`mov rcx, rax`)
+        this.visit(node.right)  // generate 'mov rax, r_operand'
+        this.nasm.text(`mov rbx, rax`)
+        this.nasm.text(`mov rax, rcx`)
+        // left operand in rax, right in rbx
+        let op_type = node.token.type
+        if (
+            op_type === TOKEN_TYPES.plus_op ||
+            op_type === TOKEN_TYPES.minus_op ||
+            op_type === TOKEN_TYPES.mul_op ||
+            op_type === TOKEN_TYPES.div_op    
+        ) {
+            let is_float_op = node.type.name === DATA_TYPES.doub ? true : false
+            this.gen_arithmetic_op(op_type, is_float_op)
+        }
+        else if (
+            op_type === TOKEN_TYPES.and_op ||
+            op_type === TOKEN_TYPES.or_op
+        ) {
+            this.gen_logic_op(op_type)
+        }
         else {
-            let comp_start_label = this.nasm.gen_label("COMP_START")
-            let right_comp_label = this.nasm.gen_label("COMP_RIGHT")
-            let comp_end_label = this.nasm.gen_label("COMP_END")
-            this.nasm.add_label(comp_start_label)
-            this.nasm.text("cmp rax, rbx")
-            if(op_type === TOKEN_TYPES.greater_equal_op) {
-                this.nasm.text(`jge ${right_comp_label}`)
-            }
-            else if(op_type === TOKEN_TYPES.greater_op) {
-                this.nasm.text(`jg ${right_comp_label}`)
-            }
-            else if(op_type === TOKEN_TYPES.less_equal_op) {
-                this.nasm.text(`jle ${right_comp_label}`)
-            }
-            else if(op_type === TOKEN_TYPES.less_op) {
-                this.nasm.text(`jl ${right_comp_label}`)
-            }
-            else if(op_type === TOKEN_TYPES.equal_op) {
-                this.nasm.text(`je ${right_comp_label}`)
-            }
-            this.nasm.text(`xor rax, rax`)
-            this.nasm.text(`jmp ${comp_end_label}`)
-            this.nasm.add_label(right_comp_label)
-            this.nasm.text(`mov rax, 1`)
-            this.nasm.add_label(comp_end_label)
+            this.gen_comparation_op(op_type)
         }
         this.nasm.add_label(this.nasm.gen_label("BINOP_END"))
     }
@@ -220,11 +258,14 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     visit_LiteralNode(node: LiteralNode): void {
         let value = node.token.value
-        // for number 
-        if(!isNaN(parseFloat(value))) {
+        
+        if (node.type.name == DATA_TYPES.int) {
             this.nasm.text(`mov rax, ${value}`)
         }
-        else {
+        else if (node.type.name == DATA_TYPES.doub) {
+            this.nasm.text(`mov rax, __float64__(${value})`)
+        }
+        else if (node.type.name == DATA_TYPES.str) {
             let str_name = 
                 "str_"+uid(10)
             this.nasm.data(`${str_name} db "${value}",0xa,0`)

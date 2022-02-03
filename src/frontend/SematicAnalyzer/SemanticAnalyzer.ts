@@ -80,25 +80,13 @@ export class SemanticAnalyzer implements INodeVisitor {
     visit_BinOpNode(node: BinOpNode): void {
         this.visit(node.left)
         this.visit(node.right)
+        node.type = this.current_type!
     }
     visit_UnOpNode(node: UnOpNode): void {
         this.visit(node.left)
     }
     visit_LiteralNode(node: LiteralNode): void {
         let value = node.token.value
-        // int case
-        if (is_int(Number(value))) {
-            value = String(value).split(".")[0]
-            node.type = new TypeNode(DATA_TYPES.int)
-        }
-        // float case
-        else if (is_float(Number(value))) {
-            node.type = new TypeNode(DATA_TYPES.doub)
-        }
-        // string case
-        else {
-            node.type = new TypeNode(DATA_TYPES.str)
-        }
         this.eat_type(node.type)
     }
     visit_IfStmNode(node: IfStmNode): void {
