@@ -18,8 +18,8 @@ export class VarSymbol extends Symbol {
 
 export class FuncSymbol extends Symbol {
     params: ParamNode[]
-    ret_type: TypeNode 
-    constructor(name: string, ret_type: TypeNode) {
+    ret_type: TypeNode | null
+    constructor(name: string, ret_type: TypeNode | null) {
         super()
         this.name = name
         this.params = []
@@ -127,7 +127,7 @@ export class SymbolManager {
             if(name[0] !== "_" && size !== 0) {
                 switch (type) {
                     case "FUNC": {
-                        imported_symbol = new FuncSymbol(name)
+                        imported_symbol = new FuncSymbol(name, null)
                         imported_symbol.IS_EXTERNAL = true
                         this.SCOPES[0].set(name, imported_symbol)
                     }

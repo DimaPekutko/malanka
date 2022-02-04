@@ -67,6 +67,13 @@ export class Parser {
         this.eat(TOKEN_TYPES.type_mark)
         let type_name = this.current_token.value
         this.eat(TOKEN_TYPES.identifier)
+        // pointer declaration
+        if (this.current_token.type === TOKEN_TYPES.mul_op) {
+            this.eat(TOKEN_TYPES.mul_op)
+            let node = new TypeNode(DATA_TYPES.pointer)
+            node.points_to_type = type_name
+            return node
+        }
         return new TypeNode(type_name)
     }
     private parse_stm_list(is_program_block: boolean = false): AstStatementNode[] {
@@ -379,7 +386,7 @@ export class Parser {
             }
             return node 
         }
-        if(this.current_token.type === TOKEN_TYPES.string) {
+        else if(this.current_token.type === TOKEN_TYPES.string) {
             this.eat(TOKEN_TYPES.string)
             node = new LiteralNode(cur_token)
             node.type = new TypeNode(DATA_TYPES.str)
@@ -404,6 +411,18 @@ export class Parser {
         else if(this.current_token.type === TOKEN_TYPES.minus_op) {
             this.eat(TOKEN_TYPES.minus_op)
             node = new UnOpNode(cur_token, this.parse_factor())
+            return node
+        }
+        else if (this.current_token.type === TOKEN_TYPES.address_op) {
+            this.eat(TOKEN_TYPES.address_op)
+            node = new UnOpNode(cur_token, new VarNode(this.current_token.value))
+            this.eat(TOKEN_TYPES.identifier)
+            return node
+        }
+        else if (this.current_token.type === TOKEN_TYPES.mul_op) {
+            this.eat(TOKEN_TYPES.mul_op)
+            node = new UnOpNode(cur_token, new VarNode(this.current_token.value))
+            this.eat(TOKEN_TYPES.identifier)
             return node
         }
         else if(this.current_token.type === TOKEN_TYPES.lpar) {

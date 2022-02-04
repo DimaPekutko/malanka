@@ -1301,28 +1301,31 @@
 segment .text
 global _start
 _start:
-	; ------ funccall -> printf
-	; ------ funccall -> fact
 	mov rax, 3
+	mov [a], rax
+	lea rax, [a]
+	mov [b], rax
+	; ------ funccall -> printf
+	mov rax, str_tymjNRsyDe
 	mov rdi, rax
+BINOP_START__FGQAo___0:
+	mov rax, [b]
+	mov rax, [rax]
+	mov rcx, rax
+	mov rax, 10
+	mov rbx, rax
+	mov rax, rcx
+	mov [buffer_xXcru], rax
+	fild qword [buffer_xXcru]
+	mov [buffer_xXcru], rbx
+	fild qword [buffer_xXcru]
+	fmul
+	fistp qword [buffer_xXcru]
+	mov rax, [buffer_xXcru]
+BINOP_END__l96ck___1:
+	mov rsi, rax
 	sub rsp, 16
 	mov rax, 0
-	call fact
-	add rsp, 16
-	; ------ funccall end -> fact
-	movq xmm1, rax
-	mov rax, str_XFOowbcI7m
-	mov rdi, rax
-	mov rax, 1
-	mov rsi, rax
-	mov rax, 2
-	mov rdx, rax
-	mov rax, 9
-	mov rcx, rax
-	mov rax, __float64__(4.3)
-	movq xmm0, rax
-	sub rsp, 16
-	mov rax, 2
 	call printf
 	add rsp, 16
 	; ------ funccall end -> printf
@@ -1330,21 +1333,11 @@ _start:
 	mov rax, 60
 	xor rdi, rdi
 	syscall
-fact:
-	push rbp
-	mov rbp, rsp
-	mov [rbp-8], rdi
-	mov rax, __float64__(3.14)
-	mov rsp, rbp
-	pop rbp
-	ret
-	xor rax, rax
-	mov rsp, rbp
-	pop rbp
-	ret
 segment .bss
+	a resb 8
+	b resb 8
 segment .data
 	TRUE db 1
 	FALSE db 0
-	buffer_Qfbwp dq 0
-	str_XFOowbcI7m db "%d, %d, %f, %f, %d",0xa,0
+	buffer_xXcru dq 0
+	str_tymjNRsyDe db "%d",0xa,0

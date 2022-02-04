@@ -26,6 +26,7 @@ export class ProgramNode extends AstNode {
 }
 export class TypeNode extends AstNode {
     name: string
+    points_to_type!: string
     constructor(name: string) {
         super()
         this.name = name

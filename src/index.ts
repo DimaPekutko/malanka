@@ -38,6 +38,7 @@ const main = (): void => {
     semantic_analyzer.analyze()
     LogManager.log("Code analyzed. No errors found.")
     // dump(ast)
+    // dump(symbol_manager)
     // exit()
 
     LogManager.log("Start building...")

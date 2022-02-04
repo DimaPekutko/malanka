@@ -43,6 +43,7 @@ export abstract class TOKEN_TYPES {
     static "mul_op" = new TokenType("mul_op", "\\*")
     static "div_op" = new TokenType("div_op", "\\/")
     static "assign_op" = new TokenType("assign_op", "\\=")
+    static "address_op" = new TokenType("address_op", "\\&")
     // marks
     static "block_start" = new TokenType("block_start", "\\:")
     static "func_decl_mark" = new TokenType("func_decl_mark", "\\.")

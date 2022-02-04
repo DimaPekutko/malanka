@@ -258,7 +258,41 @@ export class Linux_x86_64 implements INodeVisitor {
         }
         this.nasm.add_label(this.nasm.gen_label("BINOP_END"))
     }
+    gen_addr_recieving_op(node: VarNode): void {
+        let var_name = node.name
+        // var in function
+        if (this.current_scope?.is_nested_in_func_scope(var_name)) {
+            let offset = this.stack_frame_manager.get_var_offset(var_name)
+            this.nasm.text(`lea rax, [rbp-${offset}]`)
+        }
+        // var in global scope
+        else {
+            this.nasm.text(`lea rax, [${var_name}]`)
+        }
+    }
+    gen_dereferencing_op(node: VarNode): void {
+        let var_name = node.name
+        // var in function
+        if (this.current_scope?.is_nested_in_func_scope(var_name)) {
+            let offset = this.stack_frame_manager.get_var_offset(var_name)
+            this.nasm.text(`mov rax, [rbp-${offset}]`)
+            this.nasm.text(`mov rax, [rax]`)
+        }
+        // var in global scope
+        else {
+            this.nasm.text(`mov rax, [${var_name}]`)
+            this.nasm.text(`mov rax, [rax]`)
+        }
+    }
     visit_UnOpNode(node: UnOpNode): void {
+        if (node.token.type === TOKEN_TYPES.address_op && node.left instanceof VarNode) {
+            this.gen_addr_recieving_op(node.left)
+            return 
+        }
+        else if (node.token.type === TOKEN_TYPES.mul_op && node.left instanceof VarNode) {
+            this.gen_dereferencing_op(node.left)
+            return 
+        }
         this.visit(node.left) // generate: mov rax, expr
         if (node.token.type === TOKEN_TYPES.minus_op) {
             if (node.type.name === DATA_TYPES.int) {
@@ -274,7 +308,7 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     visit_LiteralNode(node: LiteralNode): void {
         let value = node.token.value
-        
+            
         if (node.type.name == DATA_TYPES.int) {
             this.nasm.text(`mov rax, ${value}`)
         }

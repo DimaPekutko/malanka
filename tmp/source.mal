@@ -1,2 +1,7 @@
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
+// dynamic "/lib/x86_64-linux-gnu/libglut.so.3"
 
+a @int = 3
+b @int* = &a
+
+printf("%d", *b*10)

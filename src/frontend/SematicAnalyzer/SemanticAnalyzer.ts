@@ -1,3 +1,4 @@
+import { TOKEN_TYPES } from 'frontend/SyntaxAnalyzer/Tokens';
 import { is_float, is_int } from './../../utils';
 import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode } from './../AST/AST';
 import { TypeSymbol, FuncSymbol, SymbolTable, ScopeTypes } from './../SymbolManager';
@@ -30,7 +31,13 @@ export class SemanticAnalyzer implements INodeVisitor {
         // type matching error
         if(this.current_type.name !== type.name) {
             LogManager.error(
-                `Invalid types: ${this.current_type.name} !== ${type.name}`,
+                `Invalid types: ${type.name} !== ${this.current_type.name}`,
+                "SemanticAnalyzer.ts"
+            )
+        }
+        if (this.current_type.points_to_type !== type.points_to_type && this.current_type.points_to_type &&type.points_to_type) {
+            LogManager.error(
+                `Invalid pointer types: ${type.points_to_type} !== ${this.current_type.points_to_type}`,
                 "SemanticAnalyzer.ts"
             )
         }
@@ -40,7 +47,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         let type_name
         this.current_scope = this.symbol_manager.new_scope(node.body.uid, 0, null)
         data_types.forEach(type => {
-            type_name = type[0]
+            type_name = type[1]
             this.current_scope?.set(type_name, new TypeSymbol(type_name))
         })
         node.body.children.forEach(stm => {
@@ -83,8 +90,47 @@ export class SemanticAnalyzer implements INodeVisitor {
         node.type = this.current_type!
     }
     visit_UnOpNode(node: UnOpNode): void {
-        this.visit(node.left)
-        node.type = this.current_type!
+        // adrress receiving operation (&a)
+        if (node.token.type === TOKEN_TYPES.address_op && node.left instanceof VarNode) {
+            let varaible = node.left
+            let defined_var = this.current_scope?.get(varaible.name)
+            if (!(defined_var instanceof VarSymbol)) {
+                LogManager.error(
+                    `Symbol '${varaible.name}' did not declared.`,
+                    "SemanticAnalyzer.ts"
+                )
+            }
+            else {
+                let new_pointer_type = new TypeNode(DATA_TYPES.pointer)
+                new_pointer_type.points_to_type = defined_var.type.name
+                node.left.type = new_pointer_type
+                this.eat_type(node.left.type)
+                node.type = this.current_type!
+            }
+        }
+        // dereferencing operation (a*)
+        else if (node.token.type === TOKEN_TYPES.mul_op && node.left instanceof VarNode) {
+            let varaible = node.left
+            let defined_var = this.current_scope?.get(varaible.name)
+            if (!(defined_var instanceof VarSymbol)) {
+                LogManager.error(
+                    `Symbol '${varaible.name}' did not declared.`,
+                    "SemanticAnalyzer.ts"
+                )
+            }
+            else {
+                let new_type = new TypeNode(defined_var.type.points_to_type)
+                // new_pointer_type.points_to_type = defined_var.type.name
+                node.left.type = new_type
+                this.eat_type(node.left.type)
+                node.type = this.current_type!
+            }
+        }
+        // just unary op (+a | -a)
+        else {
+            this.visit(node.left)
+            node.type = this.current_type!
+        }
     }
     visit_LiteralNode(node: LiteralNode): void {
         let value = node.token.value
@@ -187,7 +233,8 @@ export class SemanticAnalyzer implements INodeVisitor {
             )
         }
         else {
-            node.type = defined_var.type
+            this.eat_type(defined_var.type)
+            node.type = this.current_type!
         }
     }
     visit_FuncCallStmNode(node: FuncCallStmNode): void {
@@ -229,7 +276,7 @@ export class SemanticAnalyzer implements INodeVisitor {
                     this.eat_type(null)
                 }
             }
-            node.type = defined_func.ret_type
+            node.type = defined_func.ret_type!
         }
     }
     visit_SharedImpStmNode(node: SharedImpStmNode): void {
