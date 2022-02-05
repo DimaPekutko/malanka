@@ -3,6 +3,7 @@ import { DATA_TYPES } from 'frontend/DataTypes';
 import { ScopeTypes, SymbolTable } from 'frontend/SymbolManager';
 import { SharedLibManager, LogManager, uid, dump, exit } from './../../utils';
 import { SymbolManager } from 'frontend/SymbolManager';
+import * as SYSTEM_SYMBOLS from "frontend/SystemSymbols"
 import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
@@ -10,9 +11,11 @@ import path from "path"
 import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode, TypedAstNode } from "frontend/AST/AST";
 import { INodeVisitor } from "frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "frontend/SyntaxAnalyzer/Tokens";
-import { throws } from 'assert';
 
-// import { } from ""
+
+const NASM_BOOTSTRAP_NAME = "/bootstrap"
+const NASM_BOOTSTRAP_PATH = path.join(__dirname+NASM_BOOTSTRAP_NAME)
+const OUTPUT_DIR = "./tmp"
 
 class NasmWriter {
     private _extern: string = ``
@@ -89,11 +92,17 @@ export class Linux_x86_64 implements INodeVisitor {
                 this.nasm.extern(`extern ${symbol.name}`)
             }
         })
+        this.nasm.extern(`extern __bootstrap`)
     }
-    fill_system_constants(): void {
-        this.nasm.data("TRUE db 1")
-        this.nasm.data("FALSE db 0")
+    fill_system_symbols(): void {
         this.nasm.data(`${this.stack_frame_manager.BUFFER_MEM_NAME} dq 0`)
+        let system_symbols = Object.entries(SYSTEM_SYMBOLS)
+        system_symbols.forEach(symbol => {
+            this.nasm.extern(`extern ${symbol[0]}`)
+        })
+    }
+    load_bootsrap_nasm(): void {
+        this.nasm.text(`call __bootstrap`)
     }
     visit_ProgramNode(node: ProgramNode): void {
         // settting up func decl statements at the end of array
@@ -115,8 +124,9 @@ export class Linux_x86_64 implements INodeVisitor {
         
         this.current_scope = this.symbol_manager.get_scope(node.body.uid)
 
+        this.load_bootsrap_nasm()
         this.fill_extern_symbols()
-        this.fill_system_constants()
+        this.fill_system_symbols()
 
         node.body.children.forEach(stm => {
             this.visit(stm)
@@ -548,7 +558,8 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     private compile_nasm(): void {
         try {
-            execSync(`nasm -f elf64 ${this.output_filename}.asm `)
+            execSync(`nasm -f elf64 ${this.output_filename}.asm -o ${this.output_filename}.o `)
+            execSync(`nasm -f elf64 ${NASM_BOOTSTRAP_PATH}.asm -o ${OUTPUT_DIR}/${NASM_BOOTSTRAP_NAME}.o `)
             LogManager.log("Compiled successfully.")
         } catch (err) {
             LogManager.error("Compilation failed.", "Linux_x86_64.ts")
@@ -558,14 +569,14 @@ export class Linux_x86_64 implements INodeVisitor {
         let cmd = `ld `
         let linker_path = ``
         if (this.symbol_manager.shared_libs_list.length > 0) {
-            cmd += `-lc -dynamic-linker `
+            cmd += `-lc -lglut -lGL -dynamic-linker `
             linker_path = SharedLibManager.find_ld_linker_path()
             cmd += (linker_path+" ")
             // this.symbol_manager.shared_libs_list.forEach(lib_path => {
             //     cmd += (lib_path+" ")
             // })
         }
-        cmd += `${this.output_filename}.o -o ${this.output_filename}`
+        cmd += `${this.output_filename}.o ${OUTPUT_DIR}/${NASM_BOOTSTRAP_NAME}.o -o ${this.output_filename}`
         cmd = cmd.replace(/(\r\n|\n|\r)/gm, "");
         try {
             execSync(cmd)

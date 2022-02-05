@@ -124,7 +124,7 @@ export class SymbolManager {
             name = import_json[i].name.split("@")[0]
             type = import_json[i].type
             // dont import private values and empty values
-            if(name[0] !== "_" && size !== 0) {
+            if(name[0] !== "_") {
                 switch (type) {
                     case "FUNC": {
                         imported_symbol = new FuncSymbol(name, null)

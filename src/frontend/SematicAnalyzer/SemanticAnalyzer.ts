@@ -7,6 +7,8 @@ import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralN
 import { INodeVisitor } from 'frontend/AST/INodeVisitor';
 import { SymbolManager, VarSymbol } from 'frontend/SymbolManager';
 import { DATA_TYPES } from 'frontend/DataTypes';
+import * as SYSTEM_SYMBOLS from "frontend/SystemSymbols"
+
 
 export class SemanticAnalyzer implements INodeVisitor {
     ast: AstNode
@@ -31,24 +33,26 @@ export class SemanticAnalyzer implements INodeVisitor {
         // type matching error
         if(this.current_type.name !== type.name) {
             LogManager.error(
-                `Invalid types: ${type.name} !== ${this.current_type.name}`,
+                `Invalid types: "${type.name}" !== "${this.current_type.name}"`,
                 "SemanticAnalyzer.ts"
             )
         }
         if (this.current_type.points_to_type !== type.points_to_type && this.current_type.points_to_type &&type.points_to_type) {
             LogManager.error(
-                `Invalid pointer types: ${type.points_to_type} !== ${this.current_type.points_to_type}`,
+                `Invalid pointer types: "${type.points_to_type}" !== "${this.current_type.points_to_type}"`,
                 "SemanticAnalyzer.ts"
             )
         }
     }
     visit_ProgramNode(node: ProgramNode): void {
         let data_types = Object.entries(DATA_TYPES)
-        let type_name
+        let system_symbols = Object.entries(SYSTEM_SYMBOLS)
         this.current_scope = this.symbol_manager.new_scope(node.body.uid, 0, null)
         data_types.forEach(type => {
-            type_name = type[1]
-            this.current_scope?.set(type_name, new TypeSymbol(type_name))
+            this.current_scope?.set(type[1], new TypeSymbol(type[1]))
+        })
+        system_symbols.forEach(symbol => {
+            this.current_scope?.set(symbol[0], symbol[1])
         })
         node.body.children.forEach(stm => {
             this.eat_type(null)
@@ -78,7 +82,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         let var_name: string = node.name
         if (this.current_scope?.get(var_name) === null) {
             LogManager.error(
-                `Symbol ${var_name} did not declared.`,
+                `Symbol "${var_name}" did not declared.`,
                 "SemanticAnalyzer.ts"
             )
         }
@@ -94,37 +98,44 @@ export class SemanticAnalyzer implements INodeVisitor {
         if (node.token.type === TOKEN_TYPES.address_op && node.left instanceof VarNode) {
             let varaible = node.left
             let defined_var = this.current_scope?.get(varaible.name)
-            if (!(defined_var instanceof VarSymbol)) {
-                LogManager.error(
-                    `Symbol '${varaible.name}' did not declared.`,
-                    "SemanticAnalyzer.ts"
-                )
-            }
-            else {
+            if (defined_var instanceof VarSymbol) {
                 let new_pointer_type = new TypeNode(DATA_TYPES.pointer)
                 new_pointer_type.points_to_type = defined_var.type.name
                 node.left.type = new_pointer_type
                 this.eat_type(node.left.type)
                 node.type = this.current_type!
             }
+            else if (defined_var instanceof FuncSymbol) {
+                let new_pointer_type = new TypeNode(DATA_TYPES.pointer)
+                new_pointer_type.points_to_type = DATA_TYPES.func
+                node.left.type = new_pointer_type
+                this.eat_type(node.left.type)
+                node.type = this.current_type!
+            }
+            else {
+                LogManager.error(
+                    `Symbol "${varaible.name}" did not declared.`,
+                    "SemanticAnalyzer.ts"
+                )
+            }
         }
         // dereferencing operation (a*)
         else if (node.token.type === TOKEN_TYPES.mul_op && node.left instanceof VarNode) {
             let varaible = node.left
             let defined_var = this.current_scope?.get(varaible.name)
-            if (!(defined_var instanceof VarSymbol)) {
-                LogManager.error(
-                    `Symbol '${varaible.name}' did not declared.`,
-                    "SemanticAnalyzer.ts"
-                )
-            }
-            else {
+            if (defined_var instanceof VarSymbol) {
                 let new_type = new TypeNode(defined_var.type.points_to_type)
                 // new_pointer_type.points_to_type = defined_var.type.name
                 node.left.type = new_type
                 this.eat_type(node.left.type)
                 node.type = this.current_type!
             }
+            else {
+                LogManager.error(
+                    `Symbol "${varaible.name}" did not declared.`,
+                    "SemanticAnalyzer.ts"
+                )
+            } 
         }
         // just unary op (+a | -a)
         else {
@@ -155,7 +166,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         
         if (this.current_scope?.get(func_name) !== null) {
             LogManager.error(
-                `Symbol '${func_name}' already declared`,
+                `Symbol "${func_name}" already declared`,
                 "SemanticAnalyzer.ts"
                 );
         }
@@ -228,7 +239,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         let defined_var = this.current_scope?.get(var_name)
         if (!(defined_var instanceof VarSymbol)) {
             LogManager.error(
-                `Symbol '${var_name}' did not declared.`,
+                `Symbol "${var_name}" did not declared.`,
                 "SemanticAnalyzer.ts"
             )
         }
@@ -249,7 +260,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         }
         if (!(defined_func instanceof FuncSymbol)) {
             LogManager.error(
-                `Symbol ${func_name} did not declared.`,
+                `Symbol "${func_name}" did not declared.`,
                 "SemanticAnalyzer.ts"
             )
         }
