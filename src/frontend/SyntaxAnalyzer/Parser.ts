@@ -376,12 +376,11 @@ export class Parser {
             this.eat(TOKEN_TYPES.number)
             node = new LiteralNode(cur_token)
             // int case
-            if (is_int(Number(node.token.value))) {
-                node.token.value = String(node.token.value).split(".")[0]
+            if (is_int(Number(node.token.value)) && !String(node.token.value).includes(".")) {
                 node.type = new TypeNode(DATA_TYPES.int)
             }
             // float case
-            else if (is_float(Number(node.token.value))) {
+            else {          // if (is_float(Number(node.token.value))) {
                 node.type = new TypeNode(DATA_TYPES.doub)
             }
             return node 

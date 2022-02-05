@@ -95,6 +95,38 @@ export class VarDeclStmNode extends AstStatementNode {
 }
 
 
+export class ArrayDeclStmNode extends AstStatementNode {
+    array_name: string
+    array_type: TypeNode
+    size: number[]
+    init_value: ArrayExpr[]
+    constructor(name: string, type: TypeNode, size: number[], init_value: ArrayExpr[]) {
+        super()
+        this.array_name = name
+        this.array_type = type
+        this.size = size
+        this.init_value = init_value
+    }
+}
+
+export class ArrayExpr extends AstNode {
+    members: AstNode[]
+    constructor(members: AstNode[]) {
+        super()
+        this.members = members
+    }
+}
+
+export class ArrayMemberNode extends TypedAstNode {
+    array_name: string
+    index: number[]
+    constructor(name: string, index: number[]) {
+        super()
+        this.array_name = name
+        this.index = index
+    }
+}
+
 export class IfStmNode extends AstStatementNode {
     condition: AstNode | null
     body: BlockStmNode

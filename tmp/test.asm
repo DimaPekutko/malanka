@@ -1306,181 +1306,100 @@ segment .text
 global _start
 _start:
 	call __bootstrap
-	mov rax, 0
-	mov [a], rax
-	; ------ funccall -> main
+	mov rax, __float64__(3.14)
+	mov [PI], rax
+	; ------ funccall -> GET_SUM
+	mov rax, 1
+	mov rdi, rax
 	sub rsp, 16
 	mov rax, 0
-	call main
+	call GET_SUM
 	add rsp, 16
-	; ------ funccall end -> main
+	; ------ funccall end -> GET_SUM
+	mov [a], rax
+	; ------ funccall -> printf
+	mov rax, str_5czUY3Rvtl
+	mov rdi, rax
+	mov rax, [a]
+	movq xmm0, rax
+	sub rsp, 16
+	mov rax, 1
+	call printf
+	add rsp, 16
+	; ------ funccall end -> printf
 	; exit
 	mov rax, 60
 	xor rdi, rdi
 	syscall
-factorial:
+GET_SUM:
 	push rbp
 	mov rbp, rsp
 	mov [rbp-8], rdi
-COND_START__1SN7H___0:
-BINOP_START__lGd91___4:
-	mov rax, [rbp-8]
+	mov rax, __float64__(0.0)
+	mov [rbp-16], rax ; "res_pi" local var.
+	mov rax, 0
+	mov [rbp-24], rax ; "i" local var.
+FOR_START__B8zBt___0:
+BINOP_START__VqfXO___2:
+	mov rax, [rbp-24]
 	mov rcx, rax
-	mov rax, 1
+	mov rax, [rbp-8]
 	mov rbx, rax
 	mov rax, rcx
-COMP_START__lMpTv___5:
+COMP_START__SYkT8___3:
 	cmp rax, rbx
-	jg COMP_RIGHT__4jKI5___6
+	jl COMP_RIGHT__JySgP___4
 	xor rax, rax
-	jmp COMP_END__ZM6kq___7
-COMP_RIGHT__4jKI5___6:
+	jmp COMP_END__ZDNnA___5
+COMP_RIGHT__JySgP___4:
 	mov rax, 1
-COMP_END__ZM6kq___7:
-BINOP_END__tRw9b___8:
+COMP_END__ZDNnA___5:
+BINOP_END__6HvOf___6:
 	test rax, rax
-	jz IF_END__fS2vF___2
-IF_START__PId1s___1:
-BINOP_START__CKhcZ___9:
-	; ------ funccall -> factorial
-BINOP_START__eOcEd___10:
-	mov rax, [rbp-8]
+	jz FOR_END__1RAej___1
+BINOP_START__K2063___7:
+	mov rax, [rbp-16]
+	mov rcx, rax
+	mov rax, [PI]
+	mov rbx, rax
+	mov rax, rcx
+	mov [buffer_jC2W2], rax
+	fld qword [buffer_jC2W2]
+	mov [buffer_jC2W2], rbx
+	fld qword [buffer_jC2W2]
+	fadd
+	fstp qword [buffer_jC2W2]
+	mov rax, [buffer_jC2W2]
+BINOP_END__3nLhW___8:
+	mov [rbp-16], rax
+BINOP_START__zxMzK___9:
+	mov rax, [rbp-24]
 	mov rcx, rax
 	mov rax, 1
 	mov rbx, rax
 	mov rax, rcx
-	mov [buffer_C5F8j], rax
-	fild qword [buffer_C5F8j]
-	mov [buffer_C5F8j], rbx
-	fild qword [buffer_C5F8j]
-	fsub
-	fistp qword [buffer_C5F8j]
-	mov rax, [buffer_C5F8j]
-BINOP_END__2dzjs___11:
-	mov rdi, rax
-	sub rsp, 16
-	mov rax, 0
-	call factorial
-	add rsp, 16
-	; ------ funccall end -> factorial
-	mov rcx, rax
-	mov rax, [rbp-8]
-	mov rbx, rax
-	mov rax, rcx
-	mov [buffer_C5F8j], rax
-	fild qword [buffer_C5F8j]
-	mov [buffer_C5F8j], rbx
-	fild qword [buffer_C5F8j]
-	fmul
-	fistp qword [buffer_C5F8j]
-	mov rax, [buffer_C5F8j]
-BINOP_END__dSVIT___12:
+	mov [buffer_jC2W2], rax
+	fild qword [buffer_jC2W2]
+	mov [buffer_jC2W2], rbx
+	fild qword [buffer_jC2W2]
+	fadd
+	fistp qword [buffer_jC2W2]
+	mov rax, [buffer_jC2W2]
+BINOP_END__93GRi___10:
+	mov [rbp-24], rax
+	jmp FOR_START__B8zBt___0
+FOR_END__1RAej___1:
+	mov rax, [rbp-16]
 	mov rsp, rbp
 	pop rbp
 	ret
-	jmp COND_END__Erppu___3
-IF_END__fS2vF___2:
-COND_END__Erppu___3:
-	mov rax, 1
-	mov rsp, rbp
-	pop rbp
-	ret
-	xor rax, rax
-	mov rsp, rbp
-	pop rbp
-	ret
-main:
-	push rbp
-	mov rbp, rsp
-	; ------ funccall -> printf
-	mov rax, str_F5kSxUEJqf
-	mov rdi, rax
-	sub rsp, 16
-	mov rax, 0
-	call printf
-	add rsp, 16
-	; ------ funccall end -> printf
-	; ------ funccall -> scanf
-	mov rax, str_W1fTiW3Brh
-	mov rdi, rax
-	lea rax, [a]
-	mov rsi, rax
-	sub rsp, 16
-	mov rax, 0
-	call scanf
-	add rsp, 16
-	; ------ funccall end -> scanf
-COND_START__qY9Tu___13:
-BINOP_START__THnsb___17:
-	mov rax, [a]
-	mov rcx, rax
-	mov rax, 12
-	mov rbx, rax
-	mov rax, rcx
-COMP_START__CaFaJ___18:
-	cmp rax, rbx
-	jg COMP_RIGHT__fRU3w___19
-	xor rax, rax
-	jmp COMP_END__mY7Af___20
-COMP_RIGHT__fRU3w___19:
-	mov rax, 1
-COMP_END__mY7Af___20:
-BINOP_END__u62gd___21:
-	test rax, rax
-	jz IF_END__D7JWy___15
-IF_START__7W0j7___14:
-	; ------ funccall -> printf
-	mov rax, str_cgVeogSSxQ
-	mov rdi, rax
-	sub rsp, 16
-	mov rax, 0
-	call printf
-	add rsp, 16
-	; ------ funccall end -> printf
-	; ------ funccall -> exit
-	sub rsp, 16
-	mov rax, 0
-	call exit
-	add rsp, 16
-	; ------ funccall end -> exit
-	jmp COND_END__i0w2v___16
-IF_END__D7JWy___15:
-COND_START__arfjW___22:
-	mov rax, 1
-	test rax, rax
-	jz IF_END__774fc___24
-IF_START__ScpkE___23:
-	; ------ funccall -> printf
-	; ------ funccall -> factorial
-	mov rax, [a]
-	mov rdi, rax
-	sub rsp, 16
-	mov rax, 0
-	call factorial
-	add rsp, 16
-	; ------ funccall end -> factorial
-	mov rdx, rax
-	mov rax, str_QroYAOgBrN
-	mov rdi, rax
-	mov rax, [a]
-	mov rsi, rax
-	sub rsp, 16
-	mov rax, 0
-	call printf
-	add rsp, 16
-	; ------ funccall end -> printf
-	jmp COND_END__i0w2v___16
-IF_END__774fc___24:
-COND_END__i0w2v___16:
 	xor rax, rax
 	mov rsp, rbp
 	pop rbp
 	ret
 segment .bss
+	PI resb 8
 	a resb 8
 segment .data
-	buffer_C5F8j dq 0
-	str_F5kSxUEJqf db "Type factorial argument and then type 'y':",0xa,0
-	str_W1fTiW3Brh db "%d",0xa,0
-	str_cgVeogSSxQ db "Argument is too huge for factorial function!",0xa,0
-	str_QroYAOgBrN db "Factorial of %d is %d",0xa,0
+	buffer_jC2W2 dq 0
+	str_5czUY3Rvtl db "a => %f",0xa,0

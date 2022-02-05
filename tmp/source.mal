@@ -1,23 +1,15 @@
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
-a @int = 0
+PI @doub = 3.14
 
-.factorial @int # n @int:
-    if n > 1:
-        !factorial(n-1)*n
+.GET_SUM @doub # a @int:
+    res_pi @doub = 0.0
+    for i @int = 0; i < a; i = i+1:
+        res_pi = res_pi + PI
     end
-    !1
+    !res_pi
 end
 
-.main @void:
-    printf("Type factorial argument and then type 'y':")
-    scanf("%d", &a)
-    if a > 12:
-        printf("Argument is too huge for factorial function!")
-        exit()
-    else:
-        printf("Factorial of %d is %d", a, factorial(a))
-    end
-end
+a @doub = GET_SUM(1)
 
-main()
+printf("a => %f", a)
