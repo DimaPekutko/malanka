@@ -1,13 +1,13 @@
-import { TOKEN_TYPES } from 'frontend/SyntaxAnalyzer/Tokens';
+import { TOKEN_TYPES } from './../../frontend/SyntaxAnalyzer/Tokens';
 import { is_float, is_int } from './../../utils';
 import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode } from './../AST/AST';
 import { TypeSymbol, FuncSymbol, SymbolTable, ScopeTypes } from './../SymbolManager';
-import { LogManager, dump } from 'utils';
-import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from 'frontend/AST/AST';
-import { INodeVisitor } from 'frontend/AST/INodeVisitor';
-import { SymbolManager, VarSymbol } from 'frontend/SymbolManager';
-import { DATA_TYPES } from 'frontend/DataTypes';
-import * as SYSTEM_SYMBOLS from "frontend/SystemSymbols"
+import { LogManager, dump } from './../../utils';
+import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from './../../frontend/AST/AST';
+import { INodeVisitor } from './../../frontend/AST/INodeVisitor';
+import { SymbolManager, VarSymbol } from './../../frontend/SymbolManager';
+import { DATA_TYPES } from './../../frontend/DataTypes';
+import * as SYSTEM_SYMBOLS from "./../../frontend/SystemSymbols"
 
 
 export class SemanticAnalyzer implements INodeVisitor {
@@ -153,6 +153,9 @@ export class SemanticAnalyzer implements INodeVisitor {
             this.visit(node.condition)
         }
         this.visit(node.body)
+        if (node.alternate !== undefined) {
+            this.visit(node.alternate)
+        }
     }
     visit_ForStmNode(node: ForStmNode): void {
         this.visit(node.init_stm)
@@ -245,7 +248,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         }
         else {
             this.eat_type(defined_var.type)
-            node.type = this.current_type!
+            node.type = defined_var.type
         }
     }
     visit_FuncCallStmNode(node: FuncCallStmNode): void {

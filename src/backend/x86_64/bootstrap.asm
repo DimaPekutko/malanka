@@ -1,6 +1,6 @@
-extern printf
-extern puts
-extern exit
+; extern printf
+; extern puts
+; extern exit
 global __bootstrap 
 global __ARGC__
 global __ARGV__
@@ -15,9 +15,9 @@ __bootstrap:
     add rax, 0x16
     mov [__ARGV__], rax
     
-    mov rdi, [__ARGV__]
-    xor rax, rax
-    call printf
+    ; mov rdi, [__ARGV__]
+    ; xor rax, rax
+    ; call printf
     ; call exit
 
     xor rdi, rdi

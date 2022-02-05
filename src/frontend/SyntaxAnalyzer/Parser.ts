@@ -1,9 +1,9 @@
 import { dump, is_float, is_int } from './../../utils';
 import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ParamNode, ReturnStmNode } from './../AST/AST';
-import { AstNode, BinOpNode, LiteralNode, UnOpNode } from "frontend/AST/AST"
+import { AstNode, BinOpNode, LiteralNode, UnOpNode } from "./../../frontend/AST/AST"
 import { Token, TokenType, TOKEN_TYPES } from './Tokens'
-import { exit, LogManager } from 'utils';
-import { DATA_TYPES } from 'frontend/DataTypes';
+import { exit, LogManager } from './../../utils';
+import { DATA_TYPES } from './../../frontend/DataTypes';
 
 
 export class Parser {

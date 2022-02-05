@@ -6,7 +6,7 @@
   "scripts": {
     "start": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ts-node -r tsconfig-paths/register src/index.ts",
     "build": "tsc",
-    "compiler": "node -r ts-node/register -r tsconfig-paths/register build/index.js",
+    "compiler": "node build/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

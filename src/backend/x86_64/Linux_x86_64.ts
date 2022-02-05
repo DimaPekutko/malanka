@@ -1,20 +1,20 @@
 import { TokenType } from './../../frontend/SyntaxAnalyzer/Tokens';
-import { DATA_TYPES } from 'frontend/DataTypes';
-import { ScopeTypes, SymbolTable } from 'frontend/SymbolManager';
+import { DATA_TYPES } from './../../frontend/DataTypes';
+import { ScopeTypes, SymbolTable } from './../../frontend/SymbolManager';
 import { SharedLibManager, LogManager, uid, dump, exit } from './../../utils';
-import { SymbolManager } from 'frontend/SymbolManager';
-import * as SYSTEM_SYMBOLS from "frontend/SystemSymbols"
+import { SymbolManager } from './../../frontend/SymbolManager';
+import * as SYSTEM_SYMBOLS from "./../../frontend/SystemSymbols"
 import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 
-import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode, TypedAstNode } from "frontend/AST/AST";
-import { INodeVisitor } from "frontend/AST/INodeVisitor";
-import { TOKEN_TYPES } from "frontend/SyntaxAnalyzer/Tokens";
+import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode, TypedAstNode } from "./../../frontend/AST/AST";
+import { INodeVisitor } from "./../../frontend/AST/INodeVisitor";
+import { TOKEN_TYPES } from "./../../frontend/SyntaxAnalyzer/Tokens";
 
 
 const NASM_BOOTSTRAP_NAME = "/bootstrap"
-const NASM_BOOTSTRAP_PATH = path.join(__dirname+NASM_BOOTSTRAP_NAME)
+const NASM_BOOTSTRAP_PATH = path.join(process.cwd()+"/src/backend/x86_64"+NASM_BOOTSTRAP_NAME)
 const OUTPUT_DIR = "./tmp"
 
 class NasmWriter {

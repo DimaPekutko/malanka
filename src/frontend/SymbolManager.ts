@@ -1,4 +1,4 @@
-import { dump, SharedLibManager, LogManager } from 'utils';
+import { dump, SharedLibManager, LogManager } from './../utils';
 import { TypeNode, ParamNode } from './AST/AST';
 
 

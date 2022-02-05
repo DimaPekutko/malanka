@@ -1,28 +1,23 @@
-// npm start && ./tmp/test
-
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
-dynamic "/lib/x86_64-linux-gnu/libGL.so.1"
-dynamic "/lib/x86_64-linux-gnu/libglut.so.3"
 
-.display_callback @void:
-    glClearColor(0.1,0.4,0.1,0.9)
-    glClear(16384)
-    
-    glBegin(4)
-    glColor3d(0.9, 0.1, 0.1)
-    glVertex2d(-0.8, -0.8)
-    glColor3d(0.1, 0.9, 0.1)
-    glVertex2d(0.8, -0.8)
-    glColor3d(0.1, 0.1, 0.9)
-    glVertex2d(0.1, 0.9)
-    glEnd()
+a @int = 0
 
-    glutSwapBuffers()
+.factorial @int # n @int:
+    if n > 1:
+        !factorial(n-1)*n
+    end
+    !1
 end
 
-// Builtin Varaibles: __ARGC__ @int*, __ARGV__ @str*
-glutInit(__ARGC__, __ARGV__)
-glutInitDisplayMode(0)
-glutCreateWindow("Malanka+freeglut")
-glutDisplayFunc(&display_callback)
-glutMainLoop()
+.main @void:
+    printf("Type factorial argument and then type 'y':")
+    scanf("%d", &a)
+    if a > 12:
+        printf("Argument is too huge for factorial function!")
+        exit()
+    else:
+        printf("Factorial of %d is %d", a, factorial(a))
+    end
+end
+
+main()

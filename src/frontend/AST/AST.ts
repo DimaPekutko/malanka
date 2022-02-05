@@ -1,5 +1,5 @@
 import { uid } from './../../utils';
-import { Token } from 'frontend/SyntaxAnalyzer/Tokens';
+import { Token } from './../../frontend/SyntaxAnalyzer/Tokens';
 
 export abstract class AstNode {
     token!: Token

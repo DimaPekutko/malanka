@@ -1,4 +1,4 @@
-import { DATA_TYPES } from 'frontend/DataTypes';
+import { DATA_TYPES } from './../frontend/DataTypes';
 import { TypeNode } from './AST/AST';
 import { VarSymbol } from './SymbolManager';
 
