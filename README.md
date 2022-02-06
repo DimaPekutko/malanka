@@ -6,7 +6,7 @@ Malanka is a compiled, statically typed general purpose programming language wri
 ## Hello World
 ```java
 // import libc for printf
-dynamic "/lib/x86_64-linux-gnu/libc.so.6"
+dlib "lc"
 
 // print a message
 printf("Hello, World!")
@@ -23,7 +23,7 @@ npm i
 ## Usage
 Edit tmp/source.mal file:
 ```java
-dynamic "/lib/x86_64-linux-gnu/libc.so.6"
+dlib "lc"
 
 a @int = 1337
 
@@ -41,12 +41,12 @@ And run it:
 
 ## Features
 What is currently available:
-- [x] Data types: ```@int, @doub ```
+- [x] Data types: ```@int, @doub, @str, @pointer, @func ```
 - [x] Varaibles ```a @type = ...```
 - [x] Complex expressions ```-((2*3/21+--3)-((32/6)*365))```
 - [x] Conditions ```if 2>3: //body end```
 - [x] For loops ```for i @int=0; i < 10; i++: // body end```
-- [ ] Arrays
+- [x] Arrays ```arr{length} @type = [a,b,c...]```
 - [x] Functions ```.func_name @int # arg1 @int, arg2 @float: // body end```
 - [x] Dynamic imports ```dynamic "your_lib_path"```
 - [x] Symbol scopes
@@ -54,7 +54,7 @@ What is currently available:
 ## Example of all features
 ```java
 // import libc for printf
-dynamic "/lib/x86_64-linux-gnu/libc.so.6"
+dlib "lc" // equal: "/lib/x86_64-linux-gnu/libc.so.x"
 
 // var declaration example
 a @int = -22+(32/3+43)*8-5
@@ -71,9 +71,17 @@ else:
     printf("else case")
 end
 
+// array declaration example
+arr{5} @int = [12,3,16,235,76]
+
 // for example
-for j @int = 0; j < 10; j = j + 1:
-    printf("loop me")
+for j @int = 0; j < 5; j = j + 1:
+    printf("%d", arr[j])
+end
+
+// function example (without args)
+.say_hello @void:
+    puts("hello!")
 end
 
 // function example

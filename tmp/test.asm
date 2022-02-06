@@ -10,55 +10,93 @@ _start:
 	call __bootstrap
 	mov rax, 0
 	mov [i], rax
-FOR_START__tWm5b___0:
-BINOP_START__MJKws___2:
+FOR_START__UzEvV___0:
+BINOP_START__sN6p5___2:
 	mov rax, [i]
 	mov rcx, rax
 	mov rax, 100
 	mov rbx, rax
 	mov rax, rcx
-COMP_START__c8zye___3:
+COMP_START__krBWV___3:
 	cmp rax, rbx
-	jl COMP_RIGHT__2BqVH___4
+	jl COMP_RIGHT__hWQWZ___4
 	xor rax, rax
-	jmp COMP_END__QjkOj___5
-COMP_RIGHT__2BqVH___4:
+	jmp COMP_END__N4axd___5
+COMP_RIGHT__hWQWZ___4:
 	mov rax, 1
-COMP_END__QjkOj___5:
-BINOP_END__JYoWp___6:
+COMP_END__N4axd___5:
+BINOP_END__ARrcY___6:
 	test rax, rax
-	jz FOR_END__pCN8n___1
+	jz FOR_END__l6J7q___1
 	; ------ funccall -> printf
-	mov rax, str_SGUUrJKtZa
+	mov rax, str_Jhp7qVpGuw
 	mov rdi, rax
 	sub rsp, 16
 	mov rax, 0
 	call printf
 	add rsp, 16
 	; ------ funccall end -> printf
-BINOP_START__gdI6D___7:
+BINOP_START__LRWkc___7:
 	mov rax, [i]
 	mov rcx, rax
 	mov rax, 1
 	mov rbx, rax
 	mov rax, rcx
-	mov [buffer_HxILE], rax
-	fild qword [buffer_HxILE]
-	mov [buffer_HxILE], rbx
-	fild qword [buffer_HxILE]
+	mov [buffer_O7yxj], rax
+	fild qword [buffer_O7yxj]
+	mov [buffer_O7yxj], rbx
+	fild qword [buffer_O7yxj]
 	fadd
-	fistp qword [buffer_HxILE]
-	mov rax, [buffer_HxILE]
-BINOP_END__F5erT___8:
+	fistp qword [buffer_O7yxj]
+	mov rax, [buffer_O7yxj]
+BINOP_END__0qmPa___8:
 	mov [i], rax
-	jmp FOR_START__tWm5b___0
-FOR_END__pCN8n___1:
+	jmp FOR_START__UzEvV___0
+FOR_END__l6J7q___1:
+	mov rax, 67
+	mov [my_arr+2*8*0+8*0], rax
+	mov rax, 35
+	mov [my_arr+2*8*0+8*1], rax
+BINOP_START__Mam3J___9:
+	mov rax, 0
+	shl rax, 3
+	add rax, my_arr
+	mov rax, [rax]
+	mov rcx, rax
+	mov rax, 1
+	shl rax, 3
+	add rax, my_arr
+	mov rax, [rax]
+	mov rbx, rax
+	mov rax, rcx
+	mov [buffer_O7yxj], rax
+	fild qword [buffer_O7yxj]
+	mov [buffer_O7yxj], rbx
+	fild qword [buffer_O7yxj]
+	fadd
+	fistp qword [buffer_O7yxj]
+	mov rax, [buffer_O7yxj]
+BINOP_END__C1pO1___10:
+	mov [a], rax
+	; ------ funccall -> printf
+	mov rax, str_6swsnGUyc3
+	mov rdi, rax
+	mov rax, [a]
+	mov rsi, rax
+	sub rsp, 16
+	mov rax, 0
+	call printf
+	add rsp, 16
+	; ------ funccall end -> printf
 	; exit
 	mov rax, 60
 	xor rdi, rdi
 	syscall
 segment .bss
 	i resb 8
+	a resb 8
 segment .data
-	buffer_HxILE dq 0
-	str_SGUUrJKtZa db `hello,element!\n`,0
+	buffer_O7yxj dq 0
+	str_Jhp7qVpGuw db `hello,element!\n`,0
+	my_arr times 2 dq 0
+	str_6swsnGUyc3 db `result is %d\n`,0

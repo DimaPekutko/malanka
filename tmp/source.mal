@@ -1,5 +1,12 @@
 dlib "lc"
 
+
 for i @int = 0; i < 100; i = i + 1:
     printf("hello,element!\n")
 end
+
+my_arr{2} @int = [67,35]
+
+a @int = my_arr[0]+my_arr[1]
+
+printf("result is %d\n", a)
