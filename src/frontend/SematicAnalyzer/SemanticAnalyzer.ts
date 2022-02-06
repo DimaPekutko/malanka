@@ -1,7 +1,7 @@
 import { TOKEN_TYPES } from './../../frontend/SyntaxAnalyzer/Tokens';
 import { is_float, is_int } from './../../utils';
-import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode } from './../AST/AST';
-import { TypeSymbol, FuncSymbol, SymbolTable, ScopeTypes } from './../SymbolManager';
+import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode, ArrayDeclStmNode, ArrayExprNode, ArrayMemberNode } from './../AST/AST';
+import { TypeSymbol, FuncSymbol, SymbolTable, ScopeTypes, ArraySymbol } from './../SymbolManager';
 import { LogManager, dump } from './../../utils';
 import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from './../../frontend/AST/AST';
 import { INodeVisitor } from './../../frontend/AST/INodeVisitor';
@@ -215,17 +215,17 @@ export class SemanticAnalyzer implements INodeVisitor {
     }
     visit_VarDeclStmNode(node: VarDeclStmNode): void {
         let var_name = node.var_name
-        let var_type_name = node.type.name
+        let var_type = node.type
         this.visit(node.init_value)
         this.eat_type(node.type)
         this.eat_type(null) // clearing current_type (success type checking case)
         if (this.current_scope?.get_local(var_name) === null) {
-            if (this.current_scope?.get(var_type_name) instanceof TypeSymbol) {
-                this.current_scope?.set(var_name, new VarSymbol(var_name, node.type))
+            if (this.current_scope?.get(var_type.name) instanceof TypeSymbol) {
+                this.current_scope?.set(var_name, new VarSymbol(var_name, var_type))
             }
             else {
                 LogManager.error(
-                    `Undefined typename '${var_type_name}'.`,
+                    `Undefined typename '${var_type.name}'.`,
                     "SemanticAnalyzer.ts"
                 )
             }
@@ -237,12 +237,64 @@ export class SemanticAnalyzer implements INodeVisitor {
             )
         }
     }
+    visit_ArrayDeclStmNode(node: ArrayDeclStmNode): void {
+        let arr_name = node.array_name
+        let arr_type = node.array_type
+        let arr_size = node.size
+        this.visit(node.init_value)
+        this.eat_type(arr_type)
+        this.eat_type(null) // clearing current_type (success type checking case)
+        if (this.current_scope?.get_local(arr_name) === null) {
+            if (this.current_scope?.get(arr_type.name) instanceof TypeSymbol) {
+                this.current_scope?.set(arr_name, new ArraySymbol(arr_name, arr_type,arr_size))
+            }
+            else {
+                LogManager.error(
+                    `Undefined typename '${arr_type.name}'.`,
+                    "SemanticAnalyzer.ts"
+                )
+            }
+        }
+        else {
+            LogManager.error(
+                `Symbol '${arr_name}' already declared`,
+                "SemanticAnalyzer.ts"
+            )
+        }
+    }
+    visit_ArrayExprNode(node: ArrayExprNode): void {
+        node.members.forEach(member => {
+            this.visit(member)
+            if (!(member instanceof ArrayExprNode)) {
+                this.eat_type(member.type)
+            }
+        })
+    }
+    visit_ArrayMemberNode(node: ArrayMemberNode): void {
+        let arr_name = node.array_name
+        let arr_index = node.index
+        let defined_array = this.current_scope?.get(node.array_name)
+        if (!(defined_array instanceof ArraySymbol)) {
+            LogManager.error(
+                `Array "${arr_name}" did not declared.`,
+                "SemanticAnalyzer.ts"
+            )
+        }
+        else {
+            arr_index.forEach(index => {
+                this.visit(index)
+            })
+            this.eat_type(null)
+            this.eat_type(defined_array.type)
+            node.type = this.current_type!
+        }
+    }
     visit_VarNode(node: VarNode): void {
         let var_name = node.name
         let defined_var = this.current_scope?.get(var_name)
         if (!(defined_var instanceof VarSymbol)) {
             LogManager.error(
-                `Symbol "${var_name}" did not declared.`,
+                `Varaible "${var_name}" did not declared.`,
                 "SemanticAnalyzer.ts"
             )
         }
@@ -263,7 +315,7 @@ export class SemanticAnalyzer implements INodeVisitor {
         }
         if (!(defined_func instanceof FuncSymbol)) {
             LogManager.error(
-                `Symbol "${func_name}" did not declared.`,
+                `Function "${func_name}" did not declared.`,
                 "SemanticAnalyzer.ts"
             )
         }

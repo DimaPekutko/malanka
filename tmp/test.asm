@@ -1306,100 +1306,75 @@ segment .text
 global _start
 _start:
 	call __bootstrap
-	mov rax, __float64__(3.14)
-	mov [PI], rax
-	; ------ funccall -> GET_SUM
+	mov rax, str_9oJuFbgEP9
+	mov [num_list+5*8*0+8*0], rax
+	mov rax, str_27Hgm6QrG7
+	mov [num_list+5*8*0+8*1], rax
+	mov rax, str_aIeouxVO1L
+	mov [num_list+5*8*0+8*2], rax
+	mov rax, str_elUGIMzmmX
+	mov [num_list+5*8*0+8*3], rax
+	mov rax, str_v4Qyd6n9EF
+	mov [num_list+5*8*0+8*4], rax
+	mov rax, 0
+	mov [i], rax
+FOR_START__X4c8v___0:
+BINOP_START__m97JH___2:
+	mov rax, [i]
+	mov rcx, rax
+	mov rax, 5
+	mov rbx, rax
+	mov rax, rcx
+COMP_START__vPsQT___3:
+	cmp rax, rbx
+	jl COMP_RIGHT__yjgab___4
+	xor rax, rax
+	jmp COMP_END__MB9sc___5
+COMP_RIGHT__yjgab___4:
 	mov rax, 1
+COMP_END__MB9sc___5:
+BINOP_END__jcvhk___6:
+	test rax, rax
+	jz FOR_END__mFMaV___1
+	; ------ funccall -> printf
+	mov rax, [i]
+	shl rax, 3
+	add rax, num_list
+	mov rax, [rax]
 	mov rdi, rax
 	sub rsp, 16
 	mov rax, 0
-	call GET_SUM
-	add rsp, 16
-	; ------ funccall end -> GET_SUM
-	mov [a], rax
-	; ------ funccall -> printf
-	mov rax, str_5czUY3Rvtl
-	mov rdi, rax
-	mov rax, [a]
-	movq xmm0, rax
-	sub rsp, 16
-	mov rax, 1
 	call printf
 	add rsp, 16
 	; ------ funccall end -> printf
+BINOP_START__MW1gi___7:
+	mov rax, [i]
+	mov rcx, rax
+	mov rax, 1
+	mov rbx, rax
+	mov rax, rcx
+	mov [buffer_Ip7ps], rax
+	fild qword [buffer_Ip7ps]
+	mov [buffer_Ip7ps], rbx
+	fild qword [buffer_Ip7ps]
+	fadd
+	fistp qword [buffer_Ip7ps]
+	mov rax, [buffer_Ip7ps]
+BINOP_END__wjBBX___8:
+	mov [i], rax
+	jmp FOR_START__X4c8v___0
+FOR_END__mFMaV___1:
 	; exit
 	mov rax, 60
 	xor rdi, rdi
 	syscall
-GET_SUM:
-	push rbp
-	mov rbp, rsp
-	mov [rbp-8], rdi
-	mov rax, __float64__(0.0)
-	mov [rbp-16], rax ; "res_pi" local var.
-	mov rax, 0
-	mov [rbp-24], rax ; "i" local var.
-FOR_START__B8zBt___0:
-BINOP_START__VqfXO___2:
-	mov rax, [rbp-24]
-	mov rcx, rax
-	mov rax, [rbp-8]
-	mov rbx, rax
-	mov rax, rcx
-COMP_START__SYkT8___3:
-	cmp rax, rbx
-	jl COMP_RIGHT__JySgP___4
-	xor rax, rax
-	jmp COMP_END__ZDNnA___5
-COMP_RIGHT__JySgP___4:
-	mov rax, 1
-COMP_END__ZDNnA___5:
-BINOP_END__6HvOf___6:
-	test rax, rax
-	jz FOR_END__1RAej___1
-BINOP_START__K2063___7:
-	mov rax, [rbp-16]
-	mov rcx, rax
-	mov rax, [PI]
-	mov rbx, rax
-	mov rax, rcx
-	mov [buffer_jC2W2], rax
-	fld qword [buffer_jC2W2]
-	mov [buffer_jC2W2], rbx
-	fld qword [buffer_jC2W2]
-	fadd
-	fstp qword [buffer_jC2W2]
-	mov rax, [buffer_jC2W2]
-BINOP_END__3nLhW___8:
-	mov [rbp-16], rax
-BINOP_START__zxMzK___9:
-	mov rax, [rbp-24]
-	mov rcx, rax
-	mov rax, 1
-	mov rbx, rax
-	mov rax, rcx
-	mov [buffer_jC2W2], rax
-	fild qword [buffer_jC2W2]
-	mov [buffer_jC2W2], rbx
-	fild qword [buffer_jC2W2]
-	fadd
-	fistp qword [buffer_jC2W2]
-	mov rax, [buffer_jC2W2]
-BINOP_END__93GRi___10:
-	mov [rbp-24], rax
-	jmp FOR_START__B8zBt___0
-FOR_END__1RAej___1:
-	mov rax, [rbp-16]
-	mov rsp, rbp
-	pop rbp
-	ret
-	xor rax, rax
-	mov rsp, rbp
-	pop rbp
-	ret
 segment .bss
-	PI resb 8
-	a resb 8
+	i resb 8
 segment .data
-	buffer_jC2W2 dq 0
-	str_5czUY3Rvtl db "a => %f",0xa,0
+	buffer_Ip7ps dq 0
+	num_list times 5 dq 0
+	str_9oJuFbgEP9 db "hello,",0xa,0
+	str_27Hgm6QrG7 db "my",0xa,0
+	str_aIeouxVO1L db "name",0xa,0
+	str_elUGIMzmmX db "is",0xa,0
+	str_v4Qyd6n9EF db "Dmitry!",0xa,0

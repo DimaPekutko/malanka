@@ -1,15 +1,14 @@
 dynamic "/lib/x86_64-linux-gnu/libc.so.6"
 
-PI @doub = 3.14
+num_list {5} @str = [
+    "hello,",
+    "my",
+    "name",
+    "is",
+    "Dmitry!"
+]
 
-.GET_SUM @doub # a @int:
-    res_pi @doub = 0.0
-    for i @int = 0; i < a; i = i+1:
-        res_pi = res_pi + PI
-    end
-    !res_pi
+
+for i @int = 0; i < 5; i = i + 1:
+    printf(num_list[i])
 end
-
-a @doub = GET_SUM(1)
-
-printf("a => %f", a)

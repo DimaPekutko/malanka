@@ -99,8 +99,8 @@ export class ArrayDeclStmNode extends AstStatementNode {
     array_name: string
     array_type: TypeNode
     size: number[]
-    init_value: ArrayExpr[]
-    constructor(name: string, type: TypeNode, size: number[], init_value: ArrayExpr[]) {
+    init_value: ArrayExprNode
+    constructor(name: string, type: TypeNode, size: number[], init_value: ArrayExprNode) {
         super()
         this.array_name = name
         this.array_type = type
@@ -109,18 +109,24 @@ export class ArrayDeclStmNode extends AstStatementNode {
     }
 }
 
-export class ArrayExpr extends AstNode {
-    members: AstNode[]
-    constructor(members: AstNode[]) {
+export class ArrayExprNode extends TypedAstNode {
+    members: TypedAstNode[]
+    arr_name: string
+    size: number[]
+    depth: number
+    constructor(members: TypedAstNode[], arr_name: string, size: number[], depth: number) {
         super()
         this.members = members
+        this.arr_name = arr_name
+        this.size = size
+        this.depth = depth
     }
 }
 
 export class ArrayMemberNode extends TypedAstNode {
     array_name: string
-    index: number[]
-    constructor(name: string, index: number[]) {
+    index: TypedAstNode[]
+    constructor(name: string, index: TypedAstNode[]) {
         super()
         this.array_name = name
         this.index = index

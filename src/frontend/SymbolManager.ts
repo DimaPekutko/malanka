@@ -16,6 +16,17 @@ export class VarSymbol extends Symbol {
     }
 }
 
+export class ArraySymbol extends Symbol {
+    type: TypeNode
+    size: number[]
+    constructor(name: string, type: TypeNode, size: number[]) {
+        super()
+        this.name = name
+        this.type = type
+        this.size = size
+    }
+}
+
 export class FuncSymbol extends Symbol {
     params: ParamNode[]
     ret_type: TypeNode | null

@@ -1,6 +1,6 @@
 import { TokenType } from './../../frontend/SyntaxAnalyzer/Tokens';
 import { DATA_TYPES } from './../../frontend/DataTypes';
-import { ScopeTypes, SymbolTable } from './../../frontend/SymbolManager';
+import { ScopeTypes, SymbolTable, ArraySymbol } from './../../frontend/SymbolManager';
 import { SharedLibManager, LogManager, uid, dump, exit } from './../../utils';
 import { SymbolManager } from './../../frontend/SymbolManager';
 import * as SYSTEM_SYMBOLS from "./../../frontend/SystemSymbols"
@@ -8,7 +8,7 @@ import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 
-import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode, TypedAstNode } from "./../../frontend/AST/AST";
+import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode, TypedAstNode, ArrayDeclStmNode, ArrayExprNode, ArrayMemberNode } from "./../../frontend/AST/AST";
 import { INodeVisitor } from "./../../frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "./../../frontend/SyntaxAnalyzer/Tokens";
 
@@ -326,8 +326,7 @@ export class Linux_x86_64 implements INodeVisitor {
             this.nasm.text(`mov rax, __float64__(${value})`)
         }
         else if (node.type.name == DATA_TYPES.str) {
-            let str_name = 
-                "str_"+uid(10)
+            let str_name = "str_"+uid(10)
             this.nasm.data(`${str_name} db "${value}",0xa,0`)
             this.nasm.text(`mov rax, ${str_name}`)
         }
@@ -457,6 +456,58 @@ export class Linux_x86_64 implements INodeVisitor {
         else {
             this.nasm.text(`mov rax, [${var_name}]`)
         }
+    }
+    visit_ArrayDeclStmNode(node: ArrayDeclStmNode): void {
+        let arr_name = node.array_name
+        let arr_size = node.size
+        let arr_length = arr_size.reduce((res, current) => res*current)
+        this.nasm.data(`${arr_name} times ${arr_length} dq 0`)
+        this.visit(node.init_value)
+    }
+    visit_ArrayExprNode(node: ArrayExprNode, parent_index: number = 0): void {
+        let name = node.arr_name
+        let arr_size: Number[] = node.size
+        let depth = node.depth
+        node.members.forEach((member, i) => {
+            if (member instanceof ArrayExprNode) {
+                this.visit_ArrayExprNode(member, i)
+            }
+            else {
+                this.visit(member)      // generate: mov rax, member_value
+                this.nasm.text(`mov [${name}+${arr_size[depth]}*8*${parent_index}+8*${i}], rax`)
+            }
+        })
+    }
+    visit_ArrayMemberNode(node: ArrayMemberNode): void {
+        let arr_name = node.array_name
+        let arr_index = node.index
+        let defined_array = this.current_scope?.get(node.array_name)
+        if (defined_array instanceof ArraySymbol) {
+            let size = defined_array.size
+            if (arr_index.length == 1) {
+                this.visit(arr_index[0])
+                this.nasm.text(`shl rax, 3`)
+                this.nasm.text(`add rax, ${arr_name}`)
+                this.nasm.text(`mov rax, [rax]`)
+            }
+            else if (arr_index.length == 2) {
+                this.visit(arr_index[0])
+                this.nasm.text(`mov rbx, ${size[1]}`)
+                this.nasm.text(`mul rbx`)
+                this.nasm.text(`shl rax, 3`)
+                this.nasm.text(`push rax`)
+                this.visit(arr_index[1])
+                this.nasm.text(`shl rax, 3`)
+                this.nasm.text(`pop rbx`)
+                this.nasm.text(`add rax, rbx`)
+                this.nasm.text(`add rax, ${arr_name}`)
+                this.nasm.text(`mov rax, [rax]`)
+            }
+            else {
+                LogManager.error(`Invalid array length`, `Linux_x86_64.ts`)
+            }
+        }
+
     }
     visit_FuncCallStmNode(node: FuncCallStmNode): void {
         const func_name = node.func_name

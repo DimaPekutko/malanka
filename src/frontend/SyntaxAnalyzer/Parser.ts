@@ -1,5 +1,5 @@
 import { dump, is_float, is_int } from './../../utils';
-import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ParamNode, ReturnStmNode } from './../AST/AST';
+import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ParamNode, ReturnStmNode, ArrayDeclStmNode, ArrayExprNode, TypedAstNode, ArrayMemberNode } from './../AST/AST';
 import { AstNode, BinOpNode, LiteralNode, UnOpNode } from "./../../frontend/AST/AST"
 import { Token, TokenType, TOKEN_TYPES } from './Tokens'
 import { exit, LogManager } from './../../utils';
@@ -20,9 +20,7 @@ export class Parser {
     }
     private skip_gaps(): void {
         while(
-            this.current_token.type === TOKEN_TYPES.new_line ||
-            this.current_token.type === TOKEN_TYPES.tab
-        ) {
+            this.current_token.type === TOKEN_TYPES.new_line) {
             this.get_next_token()
         }
     }
@@ -40,16 +38,6 @@ export class Parser {
         return count
     }
     private eat(type: TokenType): void {
-        // if(type !== TOKEN_TYPES.new_line && type !== TOKEN_TYPES.tab) { 
-        //     this.skip_gaps()
-        // }
-        // else if(type === TOKEN_TYPES.new_line) {
-        //     this.skip_new_lines()
-        // }
-        // else if(type === TOKEN_TYPES.tab) {
-        //     this.skip_tabs()
-        // }
-        
         if(this.current_token.type.name === type.name) {
             this.get_next_token()
         }
@@ -139,6 +127,10 @@ export class Parser {
             else if(next_token.type === TOKEN_TYPES.type_mark) {
                 return this.parse_vardecl()
             }
+            // array declaration case
+            else if (next_token.type === TOKEN_TYPES.lbrace) {
+                return this.parse_arraydecl()
+            }
             // assignment case
             else {
                 return this.parse_assignment()
@@ -183,6 +175,54 @@ export class Parser {
         let type = this.parse_type()
         this.eat(TOKEN_TYPES.assign_op)
         return new VarDeclStmNode(name, type, this.parse_bin_expr())
+    }
+    private parse_arraydecl(): ArrayDeclStmNode {
+        let name = this.current_token.value
+        this.eat(TOKEN_TYPES.identifier)
+        let size = this.parse_arraydecl_size()
+        let type = this.parse_type()
+        this.eat(TOKEN_TYPES.assign_op)
+        let array_expr = this.parse_array_expr(name, size, 0)
+        return new ArrayDeclStmNode(name, type, size, array_expr)
+    }
+    private parse_arraydecl_size(): number[] {
+        let sizes: number[] = []
+        do {
+            this.eat(TOKEN_TYPES.lbrace)
+            sizes.push(parseInt(this.current_token.value))
+            this.eat(TOKEN_TYPES.number)
+            this.eat(TOKEN_TYPES.rbrace)
+        } while(this.current_token.type === TOKEN_TYPES.lbrace)
+        return sizes
+    }
+    private parse_array_expr(arr_name: string, arr_size: number[], depth: number = 0): ArrayExprNode {
+        let arr: TypedAstNode[] = [] 
+        this.skip_new_lines()
+        this.eat(TOKEN_TYPES.lbracket)
+        do {
+            arr.length !== 0 ? this.eat(TOKEN_TYPES.comma) : null
+            this.skip_new_lines()
+            if (this.current_token.type === TOKEN_TYPES.lbracket) {
+                arr.push(this.parse_array_expr(arr_name, arr_size, depth+1))
+            }
+            else {
+                arr.push(this.parse_bin_expr())
+            }
+            this.skip_new_lines()
+        } while(this.current_token.type !== TOKEN_TYPES.rbracket)
+        this.eat(TOKEN_TYPES.rbracket)
+        return new ArrayExprNode(arr,arr_name,arr_size,depth)
+    }
+    private parse_array_member(): ArrayMemberNode {
+        let array_name: string = this.current_token.value
+        this.eat(TOKEN_TYPES.identifier)
+        let index: TypedAstNode[] = []
+        do {
+            this.eat(TOKEN_TYPES.lbracket)
+            index.push(this.parse_bin_expr())
+            this.eat(TOKEN_TYPES.rbracket)
+        } while(this.current_token.type === TOKEN_TYPES.lbracket)
+        return new ArrayMemberNode(array_name, index)
     }
     private parse_funccall(): FuncCallStmNode {
         let name = this.current_token.value
@@ -282,10 +322,10 @@ export class Parser {
         this.eat(TOKEN_TYPES.string)
         return new SharedImpStmNode(dist)
     }
-    private parse_bin_expr(): AstNode {
+    private parse_bin_expr(): TypedAstNode {
         return this.parse_logic()
     }
-    private parse_logic(): AstNode {
+    private parse_logic(): TypedAstNode {
         let node = this.parse_comparation()
         let op = null
         while(
@@ -303,7 +343,7 @@ export class Parser {
         }
         return node
     }
-    private parse_comparation(): AstNode {
+    private parse_comparation(): TypedAstNode {
         let node = this.parse_expr()
         let op = null
         while(
@@ -333,7 +373,7 @@ export class Parser {
         }
         return node
     }
-    private parse_expr(): AstNode {
+    private parse_expr(): TypedAstNode {
         let node = this.parse_term()
         let op = null
         while(
@@ -351,7 +391,7 @@ export class Parser {
         }
         return node
     }
-    private parse_term(): AstNode {
+    private parse_term(): TypedAstNode {
         let node = this.parse_factor()
         let op = null
         while(
@@ -369,7 +409,7 @@ export class Parser {
         }
         return node
     }
-    private parse_factor(): AstNode {
+    private parse_factor(): TypedAstNode {
         let node = null
         let cur_token = this.current_token;
         if(this.current_token.type === TOKEN_TYPES.number) {
@@ -395,6 +435,9 @@ export class Parser {
             let next_token = this.peek()
             if(next_token.type === TOKEN_TYPES.lpar) {
                 node = this.parse_funccall()
+            }
+            else if (next_token.type === TOKEN_TYPES.lbracket) {
+                node = this.parse_array_member()
             }
             else {
                 this.eat(TOKEN_TYPES.identifier)
@@ -432,7 +475,7 @@ export class Parser {
         }
         else {
             LogManager.error(
-                `Unexpectod token in ${this.current_token.row}:${this.current_token.col}.`,
+                `Unexpected token ${this.current_token.type.name} in ${this.current_token.row}:${this.current_token.col}.`,
                  "Parser.ts")
             process.exit()
         }
