@@ -244,6 +244,12 @@ export class SemanticAnalyzer implements INodeVisitor {
         this.visit(node.init_value)
         this.eat_type(arr_type)
         this.eat_type(null) // clearing current_type (success type checking case)
+        if (this.current_scope?.nesting_lvl !== 0) {
+            LogManager.error(
+                `You can declare arrays only in global scope (while)`,
+                "SemanticAnalyzer.ts"
+            )
+        }
         if (this.current_scope?.get_local(arr_name) === null) {
             if (this.current_scope?.get(arr_type.name) instanceof TypeSymbol) {
                 this.current_scope?.set(arr_name, new ArraySymbol(arr_name, arr_type,arr_size))
@@ -292,15 +298,20 @@ export class SemanticAnalyzer implements INodeVisitor {
     visit_VarNode(node: VarNode): void {
         let var_name = node.name
         let defined_var = this.current_scope?.get(var_name)
-        if (!(defined_var instanceof VarSymbol)) {
+        if (defined_var instanceof VarSymbol) {
+            node.type = defined_var.type
+            this.eat_type(defined_var.type)
+        }
+        else if (defined_var instanceof ArraySymbol) {
+            node.type = new TypeNode(DATA_TYPES.pointer)
+            node.type.points_to_type = defined_var.type.name
+            this.eat_type(node.type)
+        }
+        else {
             LogManager.error(
                 `Varaible "${var_name}" did not declared.`,
                 "SemanticAnalyzer.ts"
             )
-        }
-        else {
-            this.eat_type(defined_var.type)
-            node.type = defined_var.type
         }
     }
     visit_FuncCallStmNode(node: FuncCallStmNode): void {
@@ -348,11 +359,13 @@ export class SemanticAnalyzer implements INodeVisitor {
     visit_SharedImpStmNode(node: SharedImpStmNode): void {
         if (this.current_scope?.nesting_lvl !== 0) {
             LogManager.error(
-                `You can import dynamic libraries in global scope only`,
+                `You can import dynamic libraries only in global scope`,
                 "SemanticAnalyzer.ts"
             )
         }
-        this.symbol_manager.load_shared_symbols(node.str)
+        if (!this.symbol_manager.shared_libs_list.includes(node.str)) {
+            this.symbol_manager.load_shared_symbols(node.str)
+        }
     }
     visit_EOFStmNode(node: EOFStmNode): void {
         

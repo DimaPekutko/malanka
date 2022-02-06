@@ -61,7 +61,7 @@ export abstract class TOKEN_TYPES {
     // loops
     static "for" = new TokenType("for", "for")
     // imports
-    static "shared_import_key" = new TokenType("shared_import_key", "dynamic")
+    static "shared_import_key" = new TokenType("shared_import_key", "dlib")
     // general
     static "end_key" = new TokenType("end_key", "\\end")
     static "number" = new TokenType("number","([0-9]*[.])?[0-9]+")

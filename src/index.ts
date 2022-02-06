@@ -1,11 +1,12 @@
 import { TOKEN_TYPES } from './frontend/SyntaxAnalyzer/Tokens';
 import { SemanticAnalyzer } from './frontend/SematicAnalyzer/SemanticAnalyzer';
 import { Token } from './frontend/SyntaxAnalyzer/Tokens';
-import { dump, exit, LogManager, read_from_file } from './utils';
+import { dump, exit, LogManager, read_from_file, SharedLibManager } from './utils';
 import { Parser } from './frontend/SyntaxAnalyzer/Parser';
 import { Lexer } from './frontend/SyntaxAnalyzer/Lexer';
 import { Linux_x86_64 } from './backend/x86_64/Linux_x86_64';
 import { SymbolManager } from './frontend/SymbolManager';
+
 
 const print_tokens = (tokens: Token[]): void => {
     tokens.forEach(token => {
@@ -17,6 +18,7 @@ const main = (): void => {
     let code: string = read_from_file("./tmp/source.mal")
 
     LogManager.to_log = false
+
 
     LogManager.log("Converting code into tokens..")
     const lexer = new Lexer(code)    

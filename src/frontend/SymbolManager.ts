@@ -4,6 +4,7 @@ import { TypeNode, ParamNode } from './AST/AST';
 
 export abstract class Symbol {
     IS_EXTERNAL: boolean = false
+    IS_REALLY_USED: boolean = false
     name!: string
 }
 
@@ -70,6 +71,7 @@ export class SymbolTable {
         while(cur_scope !== null) {
             symbol = cur_scope.symbols.get(name)
             if (symbol !== undefined) {
+                symbol.IS_REALLY_USED = true
                 return symbol
             }
             cur_scope = cur_scope.parent_scope
@@ -78,6 +80,9 @@ export class SymbolTable {
     }
     get_local(name: string): Symbol | null {
         let symbol = this.symbols.get(name)!
+        if (symbol) {
+            symbol.IS_REALLY_USED = true
+        }
         return symbol || null 
     }
     set(name: string, value: Symbol): void {
@@ -124,7 +129,8 @@ export class SymbolManager {
             throw new Error("Cannot execute load_shared_symbols function (no global scope).")
         }
         this.shared_libs_list.push(dist)
-        const import_names = SharedLibManager.get_lib_symbols(dist)
+        const lib_path = SharedLibManager.find_lib_path_by_shortname(dist)
+        const import_names = SharedLibManager.get_lib_symbols(lib_path)
         const import_json = JSON.parse(import_names)
         let size
         let name

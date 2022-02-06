@@ -56,8 +56,18 @@ export abstract class SharedLibManager {
         let res_string: string = Buffer.from(output).toString()
         return res_string
     }
+    static find_lib_path_by_shortname(short_name: string): string {
+        let dist = "/lib/x86_64-linux-gnu/"
+        let name = "lib"+short_name.substring(1)+".so."
+        let output = execSync(`ls ${dist} | grep ${name} | head -1`)
+        let finded_name = Buffer.from(output).toString().replace(/\s/g,'')
+        if (finded_name.length < 1) {
+            LogManager.error(`Cannot find "${name.substring(0,name.length-1)}" library in "${dist}" folder.`, "utils.ts")
+        }
+        return dist.concat(finded_name)
+    }
     static find_ld_linker_path(): string {
-        let output = execSync("ls /lib64 | grep ld-linux-x86-64.so | head -1")
+        let output = execSync("ls /lib64 | grep ld-linux-x86-64.so")
         let linker_path: string = "/lib64/"+Buffer.from(output).toString()
         return linker_path
     }
