@@ -54,13 +54,13 @@ export class Lexer {
                 }
                 // just token
                 else if(token_types[i][1] !== TOKEN_TYPES.string_quote) {
-                    if (!this.is_comment_now)
-                        this.tokens.push(new Token(token_types[i][1],match[0],this.row,this.col))
                     if(token_types[i][1] === TOKEN_TYPES.new_line) {
                         this.col = 1
                         this.row++
                         this.is_comment_now = false
                     }
+                    if (!this.is_comment_now)
+                        this.tokens.push(new Token(token_types[i][1],match[0],this.row,this.col))
                 }
                 // string case
                 else {
