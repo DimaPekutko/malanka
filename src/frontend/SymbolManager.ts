@@ -31,10 +31,10 @@ export class ArraySymbol extends Symbol {
 export class FuncSymbol extends Symbol {
     params: ParamNode[]
     ret_type: TypeNode | null
-    constructor(name: string, ret_type: TypeNode | null) {
+    constructor(name: string, ret_type: TypeNode | null, params: ParamNode[] = []) {
         super()
         this.name = name
-        this.params = []
+        this.params = params
         this.ret_type = ret_type
     }
 }
@@ -144,6 +144,11 @@ export class SymbolManager {
             if(name[0] !== "_") {
                 switch (type) {
                     case "FUNC": {
+                        imported_symbol = new FuncSymbol(name, null)
+                        imported_symbol.IS_EXTERNAL = true
+                        this.SCOPES[0].set(name, imported_symbol)
+                    }
+                    case "IFUNC": {
                         imported_symbol = new FuncSymbol(name, null)
                         imported_symbol.IS_EXTERNAL = true
                         this.SCOPES[0].set(name, imported_symbol)

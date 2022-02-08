@@ -33,7 +33,7 @@ export abstract class TOKEN_TYPES {
     static "rbrace" = new TokenType("rbrace", "\\}")
     static "comma" = new TokenType("comma", "\\,")
     static "semicolon" = new TokenType("semicolon", "\\;")
-    static "comment" = new TokenType("comment", "\\//*")
+    static "comment" = new TokenType("comment", "\\//")
     // operations
     static "and_op" = new TokenType("and_op", "\\and")    
     static "or_op" = new TokenType("or_op", "\\or")

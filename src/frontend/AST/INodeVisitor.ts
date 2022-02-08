@@ -1,4 +1,4 @@
-import {ProgramNode, BinOpNode, UnOpNode, LiteralNode, AstNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode, ArrayDeclStmNode, ArrayExprNode, ArrayMemberNode} from "./AST"
+import {ProgramNode, BinOpNode, UnOpNode, LiteralNode, AstNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode, ArrayDeclStmNode, ArrayExprNode, ArrayMemberNode, ArrayMemberAssignStmNode} from "./AST"
 
 export interface INodeVisitor {
     visit_ProgramNode(node: ProgramNode): void
@@ -15,6 +15,7 @@ export interface INodeVisitor {
     visit_ArrayDeclStmNode(node: ArrayDeclStmNode): void
     visit_ArrayExprNode(node: ArrayExprNode): void
     visit_ArrayMemberNode(node: ArrayMemberNode): void
+    visit_ArrayMemberAssignStmNode(node: ArrayMemberAssignStmNode): void
     visit_VarNode(node: VarNode): void
     visit_FuncCallStmNode(node: FuncCallStmNode): void
     visit_SharedImpStmNode(node: SharedImpStmNode): void

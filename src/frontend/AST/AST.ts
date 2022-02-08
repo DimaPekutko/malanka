@@ -133,6 +133,16 @@ export class ArrayMemberNode extends TypedAstNode {
     }
 }
 
+export class ArrayMemberAssignStmNode extends AstStatementNode {
+    arr_member: ArrayMemberNode
+    value: TypedAstNode
+    constructor(arr_member: ArrayMemberNode, value: TypedAstNode) {
+        super()
+        this.arr_member = arr_member
+        this.value = value
+    }
+}
+
 export class IfStmNode extends AstStatementNode {
     condition: AstNode | null
     body: BlockStmNode

@@ -1,6 +1,6 @@
 import { TOKEN_TYPES } from './../../frontend/SyntaxAnalyzer/Tokens';
 import { is_float, is_int } from './../../utils';
-import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode, ArrayDeclStmNode, ArrayExprNode, ArrayMemberNode } from './../AST/AST';
+import { TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ReturnStmNode, ArrayDeclStmNode, ArrayExprNode, ArrayMemberNode, ArrayMemberAssignStmNode } from './../AST/AST';
 import { TypeSymbol, FuncSymbol, SymbolTable, ScopeTypes, ArraySymbol } from './../SymbolManager';
 import { LogManager, dump } from './../../utils';
 import { ProgramNode, BlockStmNode, AssignStmNode, BinOpNode, UnOpNode, LiteralNode, VarNode, AstNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode } from './../../frontend/AST/AST';
@@ -294,6 +294,10 @@ export class SemanticAnalyzer implements INodeVisitor {
             this.eat_type(defined_array.type)
             node.type = this.current_type!
         }
+    }
+    visit_ArrayMemberAssignStmNode(node: ArrayMemberAssignStmNode): void {
+        this.visit(node.arr_member)
+        this.visit(node.value)
     }
     visit_VarNode(node: VarNode): void {
         let var_name = node.name

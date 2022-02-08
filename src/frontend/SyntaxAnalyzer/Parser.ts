@@ -1,5 +1,5 @@
 import { dump, is_float, is_int } from './../../utils';
-import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ParamNode, ReturnStmNode, ArrayDeclStmNode, ArrayExprNode, TypedAstNode, ArrayMemberNode } from './../AST/AST';
+import { ProgramNode, AstStatementNode, BlockStmNode, AssignStmNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, TypeNode, IfStmNode, ForStmNode, FuncDeclStmNode, ParamNode, ReturnStmNode, ArrayDeclStmNode, ArrayExprNode, TypedAstNode, ArrayMemberNode, ArrayMemberAssignStmNode } from './../AST/AST';
 import { AstNode, BinOpNode, LiteralNode, UnOpNode } from "./../../frontend/AST/AST"
 import { Token, TokenType, TOKEN_TYPES } from './Tokens'
 import { exit, LogManager } from './../../utils';
@@ -131,6 +131,9 @@ export class Parser {
             else if (next_token.type === TOKEN_TYPES.lbrace) {
                 return this.parse_arraydecl()
             }
+            else if (next_token.type === TOKEN_TYPES.lbracket) {
+                return this.parse_array_member_assign()
+            }
             // assignment case
             else {
                 return this.parse_assignment()
@@ -223,6 +226,12 @@ export class Parser {
             this.eat(TOKEN_TYPES.rbracket)
         } while(this.current_token.type === TOKEN_TYPES.lbracket)
         return new ArrayMemberNode(array_name, index)
+    }
+    private parse_array_member_assign(): ArrayMemberAssignStmNode {
+        let member = this.parse_array_member()
+        this.eat(TOKEN_TYPES.assign_op)
+        let value = this.parse_bin_expr()
+        return new ArrayMemberAssignStmNode(member, value)
     }
     private parse_funccall(): FuncCallStmNode {
         let name = this.current_token.value

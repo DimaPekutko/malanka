@@ -8,7 +8,7 @@ import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 
-import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode, TypedAstNode, ArrayDeclStmNode, ArrayExprNode, ArrayMemberNode } from "./../../frontend/AST/AST";
+import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode, TypedAstNode, ArrayDeclStmNode, ArrayExprNode, ArrayMemberNode, ArrayMemberAssignStmNode } from "./../../frontend/AST/AST";
 import { INodeVisitor } from "./../../frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "./../../frontend/SyntaxAnalyzer/Tokens";
 
@@ -23,7 +23,8 @@ class NasmWriter {
     private _bss: string = `segment .bss`
     private _data: string = `segment .data`
     private _label_counter: number = 0
-    buffer_label: string = ""    
+    ifelse_buffer_labels: string[] = []
+    ifelse_nesting_index: number =  0
     extern(source: string): void {
         this._extern += ("\n\t"+source)
     }
@@ -154,7 +155,7 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     gen_arithmetic_op(op_type: TokenType, is_float_op: boolean): void {
         let buffer_mem = this.stack_frame_manager.BUFFER_MEM_NAME
-        // ---- mov rax fpu stack
+        // ---- push rax to fpu stack
         this.nasm.text(`mov [${buffer_mem}], rax`)
         if (is_float_op) {
             this.nasm.text(`fld qword [${buffer_mem}]`)
@@ -162,7 +163,7 @@ export class Linux_x86_64 implements INodeVisitor {
         else {
             this.nasm.text(`fild qword [${buffer_mem}]`)
         }
-        // ---- mov rbx fpu stack
+        // ---- push rbx to fpu stack
         this.nasm.text(`mov [${buffer_mem}], rbx`)
         if (is_float_op) {
             this.nasm.text(`fld qword [${buffer_mem}]`)
@@ -241,11 +242,10 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     visit_BinOpNode(node: BinOpNode): void {
         this.nasm.add_label(this.nasm.gen_label("BINOP_START"))
-        this.visit(node.left)   // generate 'mov rax, l_operand'
-        this.nasm.text(`mov rcx, rax`)
+        this.nasm.text(`push rbx`)
         this.visit(node.right)  // generate 'mov rax, r_operand'
         this.nasm.text(`mov rbx, rax`)
-        this.nasm.text(`mov rax, rcx`)
+        this.visit(node.left)   // generate 'mov rax, l_operand'
         // left operand in rax, right in rbx
         let op_type = node.token.type
         if (
@@ -266,6 +266,7 @@ export class Linux_x86_64 implements INodeVisitor {
         else {
             this.gen_comparation_op(op_type)
         }
+        this.nasm.text(`pop rbx`)
         this.nasm.add_label(this.nasm.gen_label("BINOP_END"))
     }
     gen_addr_recieving_op(node: VarNode): void {
@@ -303,16 +304,18 @@ export class Linux_x86_64 implements INodeVisitor {
             this.gen_dereferencing_op(node.left)
             return 
         }
-        this.visit(node.left) // generate: mov rax, expr
+        this.visit(node.left) // generate: mov rax, expr_res
         if (node.token.type === TOKEN_TYPES.minus_op) {
             if (node.type.name === DATA_TYPES.int) {
                 this.nasm.text("not rax")
                 this.nasm.text("inc rax")
             }
             else {
+                this.nasm.text("push rbx")
                 this.nasm.text("mov rbx, rax")
                 this.nasm.text("mov rax, 0")
                 this.gen_arithmetic_op(TOKEN_TYPES.minus_op,true)
+                this.nasm.text("pop rbx")
             }
         }
     }
@@ -335,10 +338,10 @@ export class Linux_x86_64 implements INodeVisitor {
         let start_label = this.nasm.gen_label("COND_START")
         let if_label = this.nasm.gen_label("IF_START")
         let if_end_label = this.nasm.gen_label("IF_END")
-        let end_label = this.nasm.buffer_label
-        if (end_label.length < 1) {
+        let end_label = this.nasm.ifelse_buffer_labels[this.nasm.ifelse_nesting_index]
+        if (!end_label?.length) {
             end_label = this.nasm.gen_label("COND_END")
-            this.nasm.buffer_label = end_label
+            this.nasm.ifelse_buffer_labels[this.nasm.ifelse_nesting_index] = end_label
         }
 
         // let else_label = this.nasm.gen_label("ELSE")
@@ -352,16 +355,18 @@ export class Linux_x86_64 implements INodeVisitor {
         this.nasm.text(`test rax, rax`)
         this.nasm.text(`jz ${if_end_label}`)
         this.nasm.add_label(if_label)
+        this.nasm.ifelse_nesting_index++
         this.visit(node.body) // generate if body
+        this.nasm.ifelse_nesting_index--
         this.nasm.text(`jmp ${end_label}`)
         this.nasm.add_label(if_end_label)
 
-        if (node.alternate !== undefined) {
-            this.visit(node.alternate)
+        if (node.alternate === undefined || node.alternate === null) {
+            this.nasm.add_label(end_label)
+            this.nasm.ifelse_buffer_labels[this.nasm.ifelse_nesting_index] = ""
         }
         else {
-            this.nasm.add_label(end_label)
-            this.nasm.buffer_label = ""
+            this.visit(node.alternate)
         }
 
     }
@@ -402,11 +407,13 @@ export class Linux_x86_64 implements INodeVisitor {
         for (let i = 0; i < params.length; i++) {
             offset = this.stack_frame_manager.add_var(params[i].name)
             if (params[i].type.name !== DATA_TYPES.doub) {
-                this.nasm.text(`mov [rbp-${offset}], ${arg_registers[int_args_index]}`)
+                // this.nasm.text(`mov [rbp-${offset}], ${arg_registers[int_args_index]}`)
+                this.nasm.text(`push ${arg_registers[int_args_index]}`)
                 int_args_index++
             }
             else {
-                this.nasm.text(`movq [rbp-${offset}], ${float_arg_registers[float_args_index]}`)
+                // this.nasm.text(`movq [rbp-${offset}], ${float_arg_registers[float_args_index]}`)
+                this.nasm.text(`push ${float_arg_registers[float_args_index]}`)
                 float_args_index++
             }
         }
@@ -436,8 +443,10 @@ export class Linux_x86_64 implements INodeVisitor {
 
         // var declaration in function
         if (this.current_scope?.is_nested_in_func_scope(var_name)) {
-            let offset = this.stack_frame_manager.add_var(var_name)
-            this.nasm.text(`mov [rbp-${offset}], rax ; "${var_name}" local var.`)
+            this.stack_frame_manager.add_var("") // this need to align stack with 16 bytes border
+            this.stack_frame_manager.add_var(var_name)
+            this.nasm.text(`push 0`) // this need to align stack with 16 bytes border
+            this.nasm.text(`push rax`)
         }
         // var declaration in global scope
         else {
@@ -478,19 +487,23 @@ export class Linux_x86_64 implements INodeVisitor {
             }
         })
     }
-    visit_ArrayMemberNode(node: ArrayMemberNode): void {
+    visit_ArrayMemberNode(node: ArrayMemberNode, address_only: boolean = false): void {
         let arr_name = node.array_name
         let arr_index = node.index
         let defined_array = this.current_scope?.get(node.array_name)
         if (defined_array instanceof ArraySymbol) {
             let size = defined_array.size
+            this.nasm.text(`; ------> array member node`)
             if (arr_index.length == 1) {
                 this.visit(arr_index[0])
                 this.nasm.text(`shl rax, 3`)
                 this.nasm.text(`add rax, ${arr_name}`)
-                this.nasm.text(`mov rax, [rax]`)
+                if (!address_only) {
+                    this.nasm.text(`mov rax, [rax]`)
+                }
             }
             else if (arr_index.length == 2) {
+                this.nasm.text(`push rbx`)
                 this.visit(arr_index[0])
                 this.nasm.text(`mov rbx, ${size[1]}`)
                 this.nasm.text(`mul rbx`)
@@ -501,13 +514,27 @@ export class Linux_x86_64 implements INodeVisitor {
                 this.nasm.text(`pop rbx`)
                 this.nasm.text(`add rax, rbx`)
                 this.nasm.text(`add rax, ${arr_name}`)
-                this.nasm.text(`mov rax, [rax]`)
+                if (!address_only) {
+                    this.nasm.text(`mov rax, [rax]`)
+                }
+                this.nasm.text(`pop rbx`)
             }
             else {
                 LogManager.error(`Invalid array length`, `Linux_x86_64.ts`)
             }
+            this.nasm.text(`; ------> array member node end`)
         }
 
+    }
+    visit_ArrayMemberAssignStmNode(node: ArrayMemberAssignStmNode): void {
+        // this.nasm.text(`push rbx`)
+        // this.nasm.text(`push 0`)
+        this.visit(node.value) // generate: mov rax, expr_value
+        this.nasm.text(`mov rbx, rax`)
+        this.visit_ArrayMemberNode(node.arr_member, true) // generate: mov rax, element_address
+        this.nasm.text(`mov [rax], rbx`)
+        // this.nasm.text(`pop rbx`)
+        // this.nasm.text(`pop rbx`)
     }
     visit_FuncCallStmNode(node: FuncCallStmNode): void {
         const func_name = node.func_name
@@ -528,6 +555,12 @@ export class Linux_x86_64 implements INodeVisitor {
             let default_args: AstNode[] = []
             let float_args: AstNode[] = []
             args.forEach(arg => {
+                if (arg instanceof FuncCallStmNode) {
+                    let defined_func = this.current_scope?.get(arg.func_name) 
+                    if (defined_func?.IS_EXTERNAL) {
+                        LogManager.error(`You cannot specify dynamically imported function as argument (${arg.func_name}()). Try to create var with the result of function and then specify it as an argument. (WILL BE FIXED)`, "Linux_x86_64_ts")
+                    }
+                }
                 if (arg instanceof TypedAstNode) {
                     if (arg.type.name !== DATA_TYPES.doub) {
                         default_args.push(arg)

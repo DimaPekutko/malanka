@@ -2,6 +2,7 @@
 ; extern puts
 ; extern exit
 global __bootstrap 
+global char_to_int
 global __ARGC__
 global __ARGV__
 section .text
@@ -26,7 +27,14 @@ __bootstrap:
     xor rbx, rbx
     xor rcx, rcx
     xor rdx, rdx
-
+    ret
+char_to_int:
+    push rbp
+	mov rbp, rsp
+    mov rax, rdi
+    add rax, '0'
+	mov rsp, rbp
+    pop rbp
     ret
 section .data
     s db "args count %d", 0xa, 0
