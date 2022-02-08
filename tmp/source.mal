@@ -1,3 +1,172 @@
 dlib "lc"
+dlib "lglut"
+dlib "lGL"
 
-puts("hello")
+GAME_NAME @str = "Snake game in Malanka language"
+FPS @int = 15
+
+GLUT_SINGLE @int = 0
+GL_PROJECTION @int = 5889
+GL_COLOR_BUFFER_BIT @int = 16384
+GL_TRIANGLES @int = 4
+
+WINDOW_WIDTH @int = 500
+WINDOW_HEIGHT @int = 500
+
+CELLS_COUNT @int = 20
+CELL_SIZE @int = WINDOW_WIDTH/CELLS_COUNT
+
+KEY_UP @int = 119
+KEY_RIGHT @int = 100
+KEY_DOWN @int = 115
+KEY_LEFT @int = 97
+
+MOVE_UP    @int = 0
+MOVE_RIGHT @int = 1
+MOVE_DOWN  @int = 0
+MOVE_LEFT  @int = 0
+
+apple_x @int = CELL_SIZE*8
+apple_y @int = CELL_SIZE*8
+snake{100}{2} @int = [[0,0]]
+snake_len @int = 1
+
+.draw_apple @void:
+    glColor3d(1.0,0.0,0.0,1.0)
+    glRecti(apple_x,apple_y,apple_x+CELL_SIZE,apple_y+CELL_SIZE)
+end
+
+.draw_player @void:
+    plx @int = 0
+    ply @int = 0
+    glColor3d(0.0,1.0,0.0,1.0)
+    for i @int = 0; i < snake_len; i = i + 1:
+        plx = snake[i][0]
+        ply = snake[i][1]
+        glRecti(plx,ply,plx+CELL_SIZE,ply+CELL_SIZE)
+    end
+end
+
+.change_direction @void # key @int:
+    MOVE_UP = 0
+    MOVE_RIGHT = 0
+    MOVE_DOWN = 0
+    MOVE_LEFT = 0
+    if key == KEY_UP:
+        MOVE_UP = 1
+    elif key == KEY_RIGHT:
+        MOVE_RIGHT = 1
+    elif key == KEY_DOWN:
+        MOVE_DOWN = 1
+    elif key == KEY_LEFT:
+        MOVE_LEFT = 1
+    end
+end
+
+.move @void:
+    for i @int = snake_len-1; i > 0; i = i - 1:
+        snake[i][0] = snake[i-1][0]
+        snake[i][1] = snake[i-1][1]
+    end
+    if MOVE_UP:
+        snake[0][1] = snake[0][1] + CELL_SIZE
+    elif MOVE_RIGHT:
+        snake[0][0] = snake[0][0] + CELL_SIZE
+    elif MOVE_DOWN:
+        snake[0][1] = snake[0][1] - CELL_SIZE
+    elif MOVE_LEFT:
+        snake[0][0] = snake[0][0] - CELL_SIZE
+    end
+end
+
+.check_bounds @void:
+    if snake[0][1] >= WINDOW_HEIGHT:
+        snake[0][1] = 0
+    elif snake[0][0] >= WINDOW_WIDTH:
+        snake[0][0] = 0
+    elif snake[0][1] <= 0-CELL_SIZE:
+        snake[0][1] = WINDOW_HEIGHT-CELL_SIZE
+    elif snake[0][0] <= 0-CELL_SIZE:
+        snake[0][0] = WINDOW_WIDTH-CELL_SIZE
+    end
+end
+
+.eat_apple @void:
+    if snake[0][0] == apple_x and snake[0][1] == apple_y:
+        rand_x @int = rand()
+        rand_x_rounded @int = ((rand_x)/(CELLS_COUNT*2-1))*(CELLS_COUNT*2-1)
+        rand_y @int = rand()
+        rand_y_rounded @int = ((rand_y)/(CELLS_COUNT*2-1))*(CELLS_COUNT*2-1)
+        if rand_x > rand_x_rounded:
+            rand_x = rand_x - rand_x_rounded
+        else:
+            rand_x = rand_x_rounded - rand_x
+        end
+        if rand_y > rand_y_rounded:
+            rand_y = rand_y - rand_y_rounded
+        else:
+            rand_y = rand_y_rounded - rand_y
+        end
+        apple_x = rand_x*CELL_SIZE
+        apple_y = rand_x*CELL_SIZE
+        snake[snake_len][0] = snake[0][0]
+        snake[snake_len][1] = snake[0][1]
+        snake_len = snake_len + 1
+    end
+end
+
+.collide_tale @void:
+    head_x @int = snake[0][0]
+    head_y @int = snake[0][1]
+    for i @int = 1; i < snake_len; i = i + 1:
+        if head_x == snake[i][0] and head_y == snake[i][1]:
+            printf("You lose, SCORE: %d\n", snake_len)
+            snake_len = 1
+        end
+    end
+end
+
+.display_callback @void:
+    glClearColor(0.0,0.0,0.0,0.0)
+    glClear(GL_COLOR_BUFFER_BIT)
+
+    draw_apple()
+    draw_player()
+
+    glutSwapBuffers()
+end
+
+.timer_callback @void # val @int:
+    move()
+    check_bounds()
+    collide_tale()
+    eat_apple()
+    glutPostRedisplay()
+    glutTimerFunc(1000/FPS,&timer_callback,0)
+end
+
+.keydown_callback @void # key @int, x @int, y @int:
+    change_direction(key)
+end
+
+.init @void:
+    timestamp @int = time(0)
+    srand(timestamp)
+    glutInit(__ARGC__, __ARGV__)
+    glutInitDisplayMode(GLUT_SINGLE)
+    glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+    glutCreateWindow(GAME_NAME)
+    glutDisplayFunc(&display_callback)
+    glutTimerFunc(1000/FPS,&timer_callback,0)
+    glutKeyboardFunc(&keydown_callback)
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
+    glOrtho(0.0, 500.0, 0.0, 500.0, 0.0, 1.0)
+    glutMainLoop()
+end
+
+.start_game @void:
+    init()
+end
+
+start_game()
