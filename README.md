@@ -12,8 +12,12 @@ dlib "lc"
 printf("Hello, World!")
 ```
 ## Installation
-Malanka requires npm to be installed on your machine.
+Malanka requires some dependencies to be installed on your machine.
 
+```bash
+sudo apt-get install nodejs npm nasm
+```
+And install language itself:
 ```bash
 git clone https://github.com/DimaPekutko/malanka
 cd malanka
