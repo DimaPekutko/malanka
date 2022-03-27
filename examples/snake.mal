@@ -28,7 +28,11 @@ MOVE_LEFT  @int = 0
 
 apple_x @int = CELL_SIZE*8
 apple_y @int = CELL_SIZE*8
+
+// a @int * = &apple_x
+
 snake{100}{2} @int = [[0,0]]
+
 snake_len @int = 1
 
 .draw_apple @void:

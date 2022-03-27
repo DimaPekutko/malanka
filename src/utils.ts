@@ -73,10 +73,9 @@ export abstract class SharedLibManager {
     }
 }
 
-
 export abstract class LogManager {
     private static full_log = ``
-    static to_log: boolean = true
+    static to_log: boolean = false
     static error(msg: string, from: string): void {
         let error = chalk.red("[ERROR] ") + from + ": " + msg
         console.log(error)
