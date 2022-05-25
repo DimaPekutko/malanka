@@ -1,0 +1,32 @@
+dlib "lc"
+
+arr{10} @int = [32,53,11,4,67,43,100,3,2,50]
+
+.print_arr @void:
+    printf("Arr: \n")
+    for i @int = 0; i < 10; i=i+1:
+        printf("%d ", arr[i])
+    end
+end
+
+.bubble @void:
+    for i @int = 0; i < 10; i=i+1:
+        for j @int = i; j < 10; j=j+1:
+            if arr[j] < arr[i]:
+                tmp @int = arr[i]
+                arr[i] = arr[j]
+                arr[j] = tmp
+            end
+        end
+    end
+end
+
+.main @void:
+    print_arr()
+    printf("\nBubble sorting:\n")
+    bubble()
+    print_arr()
+    printf("\n")
+end
+
+main()

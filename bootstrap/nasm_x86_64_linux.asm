@@ -39,4 +39,5 @@ char_to_int:
 section .data
     s db "args count %d", 0xa, 0
     __ARGC__ dq 0
-    __ARGV__ dq 0
+	__ARGV__ dq 0
+	

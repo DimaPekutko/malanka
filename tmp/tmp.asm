@@ -9,37 +9,27 @@ segment .text
 global _start
 _start:
 	call __bootstrap
-	; ------ funccall -> printf
-	mov rax, str_E6DkMUYi99
-	mov rdi, rax
-	sub rsp, 16
-	mov rax, 0
-	call printf
-	add rsp, 16
-	; ------ funccall end -> printf
-	; ------ funccall -> printf
-	mov rax, str_tpObMGmeZg
-	mov rdi, rax
-	sub rsp, 16
-	mov rax, 0
-	call printf
-	add rsp, 16
-	; ------ funccall end -> printf
-	; ------ funccall -> printf
-	mov rax, str_ytCMmpJJqq
-	mov rdi, rax
-	sub rsp, 16
-	mov rax, 0
-	call printf
-	add rsp, 16
-	; ------ funccall end -> printf
 	; exit
 	mov rax, 60
 	xor rdi, rdi
 	syscall
+some_value:
+	push rbp
+	mov rbp, rsp
+	push rdi
+	; ------ funccall -> printf
+	mov rax, str_mvAln0r49y
+	mov rdi, rax
+	sub rsp, 16
+	mov rax, 0
+	call printf
+	add rsp, 16
+	; ------ funccall end -> printf
+	xor rax, rax
+	mov rsp, rbp
+	pop rbp
+	ret
 segment .bss
 segment .data
-	buffer_aiUfu dq 0
-	str_E6DkMUYi99 db `hello\n`,0
-	str_tpObMGmeZg db `\n`,0
-	str_ytCMmpJJqq db `wtf\n`,0
+	buffer_jKOT5 dq 0
+	str_mvAln0r49y db `hello\n`,0

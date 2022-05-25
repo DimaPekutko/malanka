@@ -1,3 +1,6 @@
+// ---- | Compliation: | ----
+// ---- | $ malanka snake.mal && ./snake | ----
+
 dlib "lc"
 dlib "lglut"
 dlib "lGL"

@@ -73,33 +73,3 @@ export abstract class TOKEN_TYPES {
     // end of file
     static "EOF" = new TokenType("EOF", "")
 }
-
-// export default {
-//     "variable_key": new Token_Type("variable_key", "val"),
-//     "function_key": new Token_Type("function_key", "def"),
-
-//     "assignment": new Token_Type("assignment", "="),
-//     "com": new Token_Type("com", ","),
-
-//     "space": new Token_Type("space", "\\s"),
-//     "semicolon": new Token_Type("semicolon", "\\;"),
-//     "lpar": new Token_Type("lpar", "\\("),
-//     "rpar": new Token_Type("rpar", "\\)"),
-//     "lbrace": new Token_Type("lbrace", "\\{"),
-//     "rbrace": new Token_Type("rbrace", "\\}"),
-
-//     "plus_op": new Token_Type("plus_op", "\\+"),
-//     "minus_op": new Token_Type("minus_op", "\\-"),
-//     "mult_op": new Token_Type("mult_op", "\\*"),
-//     "div_op": new Token_Type("div_op", "\\/"),
-
-//     "int_type": new Token_Type("int_type", "@int"),
-//     "float_type": new Token_Type("float_type", "@float"),
-//     "string_type": new Token_Type("string_type", "@string"),
-
-//     "float_number": new Token_Type("float_number", "([0-9]*[.])?[0-9]+"),
-//     "number": new Token_Type("number", "\\d+"),
-//     "identifier": new Token_Type("identifier", "[a-z]*"),
-
-//     "EOF": new Token_Type("EOF",""),
-// }
