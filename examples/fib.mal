@@ -1,6 +1,5 @@
 dlib "lc"
 
-
 .fib @int # n @int:
     if n <= 1:
         ! n
@@ -8,10 +7,11 @@ dlib "lc"
     ! fib(n-1) + fib(n-2)
 end
 
-
 count @int = 30 
+
 printf("First %d fib numbers: \n", count)
 for i @int = 0; i < count; i = i + 1:
     printf("%d ", fib(i))
 end
+
 printf("\n")

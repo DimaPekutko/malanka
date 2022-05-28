@@ -1,0 +1,54 @@
+dlib "lc"
+
+SIZE @int = 20
+ARR{20} @int = [0]
+
+.gen_random_seed @void:
+    time_seed @int = time(0) 
+    srand(time_seed)
+end
+
+.print_arr @void:
+    printf("Arr: \n")
+    for i @int = 0; i < SIZE; i=i+1:
+        printf("%d ", ARR[i])
+    end
+    printf("\n")
+end
+
+.fill_with_random @void:
+    for i @int = 0; i < SIZE; i=i+1:
+        ARR[i] = rand()/1000000
+    end
+end
+
+
+.partition @int # start @int, _end @int:
+    ! 1
+end
+
+.quick_sort @void # start @int, _end @int:
+    if start >= _end:
+        !0
+    end
+
+    p @int = partition(start, _end)
+    quick_sort(start, p-1)
+    quick_sort(p+1,_end)
+end
+
+.main @int:
+    gen_random_seed()
+    // array filling
+    fill_with_random()
+    print_arr()
+    // quick sorting
+    quick_sort(0, SIZE-1)
+    print_arr()
+    !0
+end
+
+main()
+
+
+

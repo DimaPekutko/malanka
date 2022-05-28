@@ -1,0 +1,7 @@
+dlib "lc"
+
+my_data @str = "This text writed with malanka language."
+file_ptr @int = fopen("test_file.txt", "w")
+
+fputs(my_data, file_ptr)
+fclose(file_ptr)
