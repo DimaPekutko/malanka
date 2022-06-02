@@ -37,7 +37,7 @@ export class SemanticAnalyzer implements INodeVisitor {
                 "SemanticAnalyzer.ts"
             )
         }
-        if (this.current_type.points_to_type !== type.points_to_type && this.current_type.points_to_type &&type.points_to_type) {
+        if (this.current_type.points_to_type !== type.points_to_type && this.current_type.points_to_type && type.points_to_type) {
             LogManager.error(
                 `Invalid pointer types: "${type.points_to_type}" !== "${this.current_type.points_to_type}"`,
                 "SemanticAnalyzer.ts"

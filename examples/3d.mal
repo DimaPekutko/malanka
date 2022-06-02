@@ -1,0 +1,155 @@
+dlib "lc"
+dlib "lm"
+dlib "lglut"
+dlib "lGL"
+dlib "lGLU"
+
+WIN_WIDTH  @int = 16*50
+WIN_HEIGHT @int = 9*50
+WIN_TITLE  @str = "Some 3D simulation with malanka language."
+
+FPS @int = 60
+TO_RADIANS @doub = 3.14/180.0
+
+pitch @doub = 0.0
+yaw   @doub = 0.0
+cam_x @doub = 0.0
+cam_z @doub = 0.0
+
+// 0 - forward, 1 - backward, 2 - left, 3 - right
+MOVE_FORWARD  @int = 0
+MOVE_BACKWARD @int = 0
+MOVE_LEFT     @int = 0
+MOVE_RIGHT    @int = 0
+// glut constants
+GLUT_CURSOR_NONE @int = 101
+GL_DEPTH_TEST    @int = 2929
+GL_LEQUAL        @int = 515
+GL_MODELVIEW     @int = 5888
+GL_PROJECTION    @int = 5889
+CLEAR_MODE       @int = 16640
+DISPLAY_MODE     @int = 10
+
+.camera @void:
+    // forward
+    if MOVE_FORWARD == 1:
+        cam_x = cam_x + cos((yaw+90.0)*TO_RADIANS)/5.0
+        cam_z = cam_z - sin((yaw+90.0)*TO_RADIANS)/5.0
+    end
+    // backward
+    if MOVE_BACKWARD == 1:
+        cam_x = cam_x + cos((yaw+270.0)*TO_RADIANS)/5.0
+        cam_z = cam_z - sin((yaw+270.0)*TO_RADIANS)/5.0
+    end
+    // left
+    if MOVE_LEFT == 1:
+        cam_x = cam_x + cos((yaw+180.0)*TO_RADIANS)/5.0
+        cam_z = cam_z - sin((yaw+180.0)*TO_RADIANS)/5.0
+    end
+    // right
+    if MOVE_RIGHT == 1:
+        cam_x = cam_x + cos((yaw)*TO_RADIANS)/5.0
+        cam_z = cam_z - sin((yaw)*TO_RADIANS)/5.0
+    end
+
+    if pitch >= 70.0:
+        pitch = 70.0
+    end
+
+    glRotated(-pitch,1.0,0.0,0.0) // Along X axis
+    glRotated(-yaw,0.0,1.0,0.0)    //Along Y axis
+    glTranslated(-cam_x,0.0,-cam_z)
+
+end
+
+.draw @void:
+    glBegin(7) // GL_QUADS
+
+    step @doub = 5.0
+    color @doub = 1.0
+    SIZE @doub = 30.0
+    for x @doub = 1.0; x < SIZE; x = x + 1.0:
+        _x @doub = (SIZE/2.0)*step-x*step
+        for z @doub = 1.0; z < SIZE; z = z + 1.0:
+            _z @doub = (SIZE/2.0+1.0)*step-z*step
+            glColor3d(color, color, color)
+            glVertex3d(_x,  -5.0,  _z)
+            glVertex3d(_x+step, -5.0,  _z)
+            glVertex3d(_x+step, -5.0,  _z+step)
+            glVertex3d(_x,  -5.0,  _z+step)
+            if color == 1.0:
+                color = 0.0
+            else:
+                color = 1.0
+            end
+        end
+    end
+    glEnd()
+end
+
+.on_display @void:
+    glClear(CLEAR_MODE)
+    glLoadIdentity()
+    camera()
+    glTranslated(0.0,0.0,-10.0)
+    glColor3d(0.3,1.0,0.3)
+    glutSolidCube(2)
+    draw()
+
+    glutSwapBuffers()
+end
+
+.on_timer @void:
+    glutPostRedisplay()
+    glutWarpPointer(WIN_WIDTH/2, WIN_HEIGHT/2)
+    glutTimerFunc(1000/FPS, &on_timer, 0)
+end
+
+.on_reshape @void # w @int, h @int:
+    glViewport(0,0,w,h)
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
+    gluPerspective(60.0,16.0/9.0,1.0,75.0)
+    glMatrixMode(GL_MODELVIEW)
+end
+
+.on_passive_motion @void # x @int, y @int:
+    dx @doub = int_to_doub((WIN_WIDTH/2)-x)
+    dy @doub = int_to_doub((WIN_HEIGHT/2)-y)
+    yaw = yaw + dx/10.0
+    pitch = pitch + dy/10.0
+end
+
+.on_keyboard_down @void # key @int:
+   
+end
+
+.on_keyboard_up @void # key @int, x @int, y @int:
+
+end
+
+.init @void:
+    glutSetCursor(GLUT_CURSOR_NONE)
+    glEnable(GL_DEPTH_TEST)
+    glDepthFunc(GL_LEQUAL)
+    glutWarpPointer(WIN_WIDTH/2,WIN_HEIGHT/2)
+    glutFullScreen()
+end
+
+.main @void:
+    glutInit(__ARGC__, __ARGV__)
+    glutInitDisplayMode(DISPLAY_MODE)
+    glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT)
+    glutCreateWindow(WIN_TITLE)
+
+    init()
+    glutDisplayFunc(&on_display)
+    glutReshapeFunc(&on_reshape)
+    glutTimerFunc(0,&on_timer,0)
+    glutPassiveMotionFunc(&on_passive_motion)
+    glutKeyboardFunc(&on_keyboard_down)
+    glutKeyboardUpFunc(&on_keyboard_up)
+    glutMainLoop()
+end
+
+main()

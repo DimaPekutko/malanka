@@ -15,3 +15,7 @@ export const __ARGV__ = new VarSymbol("__ARGV__", argv_type)
 export const char_to_int = new FuncSymbol("char_to_int",new TypeNode(DATA_TYPES.int), [
     new ParamNode("arg", new TypeNode(DATA_TYPES.int))
 ])
+
+export const int_to_doub = new FuncSymbol("int_to_doub",new TypeNode(DATA_TYPES.doub), [
+    new ParamNode("arg", new TypeNode(DATA_TYPES.int))
+])
