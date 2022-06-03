@@ -25,7 +25,7 @@ npm i
 ```
 
 ## Usage
-Edit tmp/source.mal file:
+Create file, for example main.mal. Put inside:
 ```java
 dlib "lc"
 
@@ -33,13 +33,13 @@ a @int = 1337
 
 printf("%d", a)
 ```
-Compile with commnad:
+Compile with commnad (in the project root folder):
 ```bash
-npm start
+npm run compiler main.mal
 ```
 And run it:
 ```bash
-./tmp/test # output: 1337
+./main # output: 1337
 ```
 
 
@@ -52,7 +52,7 @@ What is currently available:
 - [x] For loops ```for i @int=0; i < 10; i++: // body end```
 - [x] Arrays ```arr{length} @type = [a,b,c...]```
 - [x] Functions ```.func_name @int # arg1 @int, arg2 @float: // body end```
-- [x] Dynamic imports ```dynamic "your_lib_path"```
+- [x] Dynamic imports ```dlib "your_lib_path" (lib path should starts with l, for example for libc library use "lc")```
 - [x] Symbol scopes
 
 ## Example of all features
