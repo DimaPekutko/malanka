@@ -1,6 +1,6 @@
 {
-  "name": "malanka",
-  "version": "1.0.0",
+  "name": "malanka-lang",
+  "version": "0.0.1",
   "description": "Malanka compiler for Malanka programming language",
   "main": "./build/index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://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@github.com/DimaPekutko/malanka.git"
+    "url": "https://github.com/DimaPekutko/malanka.git"
   },
   "keywords": [
     "malanka",

@@ -15,13 +15,14 @@ printf("Hello, World!")
 Malanka requires some dependencies to be installed on your machine.
 
 ```bash
-sudo apt-get install nodejs npm nasm
+sudo apt-get install nodejs npm nasm freeglut3-dev
 ```
 And install language itself:
 ```bash
 git clone https://github.com/DimaPekutko/malanka
 cd malanka
 npm i
+npm run build
 ```
 
 ## Usage
@@ -31,7 +32,7 @@ dlib "lc"
 
 a @int = 1337
 
-printf("%d", a)
+printf("%d\n", a)
 ```
 Compile with commnad (in the project root folder):
 ```bash

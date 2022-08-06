@@ -1,0 +1,5 @@
+dlib "lc"
+
+a @int = 228
+
+printf("%d\n", a)

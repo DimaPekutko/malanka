@@ -7,6 +7,8 @@ import * as SYSTEM_SYMBOLS from "./../../frontend/SystemSymbols"
 import { writeFileSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
+import { cwd } from "process"
+
 
 import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode, TypedAstNode, ArrayDeclStmNode, ArrayExprNode, ArrayMemberNode, ArrayMemberAssignStmNode } from "./../../frontend/AST/AST";
 import { INodeVisitor } from "./../../frontend/AST/INodeVisitor";
@@ -14,7 +16,7 @@ import { TOKEN_TYPES } from "./../../frontend/SyntaxAnalyzer/Tokens";
 
 
 const NASM_BOOTSTRAP_PATH = path.join(__dirname+"/../../../bootstrap/nasm_x86_64_linux.asm")
-const TMP_DIR = path.join(__dirname+"/../../../tmp/")
+const TMP_DIR = path.join(cwd()+"/tmp/")
 
 
 class NasmWriter {
