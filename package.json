@@ -1,6 +1,6 @@
 {
   "name": "malanka-lang",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Malanka compiler for Malanka programming language",
   "main": "./build/index.js",
   "scripts": {
