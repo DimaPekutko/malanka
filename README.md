@@ -3,6 +3,10 @@
 
 Malanka is a compiled, statically typed general purpose programming language written in TypeScript and similar to C, Ruby, and Typescript itself. 
 
+# !!!WARNING!!!
+Don't use this language for anything but entertainment!
+ 
+
 ## Hello World
 ```java
 // import libc for printf
@@ -11,22 +15,21 @@ dlib "lc"
 // print a message
 printf("Hello, World!")
 ```
+
+
 ## Installation
 Malanka requires some dependencies to be installed on your machine.
 
 ```bash
-sudo apt-get install nodejs npm nasm freeglut3-dev
+sudo apt-get install nodejs npm nasm freeglut3-dev # freeglut optionally
 ```
 And install language itself:
 ```bash
-git clone https://github.com/DimaPekutko/malanka
-cd malanka
-npm i
-npm run build
+npm install -g malanka-lang
 ```
 
 ## Usage
-Create file, for example main.mal. Put inside:
+Create file, for example test.mal. Put inside:
 ```java
 dlib "lc"
 
@@ -36,11 +39,11 @@ printf("%d\n", a)
 ```
 Compile with commnad (in the project root folder):
 ```bash
-npm run compiler main.mal
+malanka test.mal
 ```
 And run it:
 ```bash
-./main # output: 1337
+./test  # output: 1337
 ```
 
 
@@ -104,6 +107,7 @@ foo(543, 2135)
 
 ## Supported platforms
 You can run it only on these platforms:
-- [x] Linux x86-64
+- [x] Linux x86-64 (Tested only on Debian based)
+
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)

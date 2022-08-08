@@ -4,7 +4,7 @@ import { ScopeTypes, SymbolTable, ArraySymbol } from './../../frontend/SymbolMan
 import { SharedLibManager, LogManager, uid, dump, exit } from './../../utils';
 import { SymbolManager } from './../../frontend/SymbolManager';
 import * as SYSTEM_SYMBOLS from "./../../frontend/SystemSymbols"
-import { writeFileSync } from "fs"
+import { writeFileSync, existsSync, mkdirSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 import { cwd } from "process"
@@ -634,9 +634,12 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     compile(): void {
         this.visit(this.ast)
-        // console.log(Buffer.from(execSync("ls")).toString())
+
+        if (!existsSync(TMP_DIR)) {
+            mkdirSync(TMP_DIR);
+        }
         writeFileSync(`${TMP_DIR}tmp.asm`, this.nasm.get_source())
-        
+
         this.compile_nasm()
         this.link_obj()
 
