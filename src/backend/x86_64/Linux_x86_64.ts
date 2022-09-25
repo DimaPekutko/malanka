@@ -429,6 +429,24 @@ export class Linux_x86_64 implements INodeVisitor {
         this.stack_frame_manager.clear()
 
         this.nasm.text(`xor rax, rax`)
+        offset = 0
+        int_args_index = params.length-1
+        float_args_index = 0
+        // console.log(arg_registers)
+        for (let i = params.length-1; i >= 0; i--) {
+            // offset = this.stack_frame_manager.add_var(params[i].name)
+            if (params[i].type.name !== DATA_TYPES.doub) {
+                // this.nasm.text(`mov [rbp-${offset}], ${arg_registers[int_args_index]}`)
+                this.nasm.text(`pop ${arg_registers[int_args_index]}`)
+                int_args_index--
+            }
+            else {
+                // this.nasm.text(`movq [rbp-${offset}], ${float_arg_registers[float_args_index]}`)
+                this.nasm.text(`pop ${float_arg_registers[float_args_index]}`)
+                float_args_index++
+            }
+        }
+
         this.nasm.text(`mov rsp, rbp`)
         this.nasm.text(`pop rbp`)
         this.nasm.text(`ret`)
@@ -643,12 +661,16 @@ export class Linux_x86_64 implements INodeVisitor {
         this.compile_nasm()
         this.link_obj()
 
-        LogManager.success(`Run by: ${"./"+this.output_filename}.`)
+        LogManager.success(`Run by: ${this.output_filename}.`)
     }
     private compile_nasm(): void {
         try {
-            execSync(`nasm -f elf64 ${TMP_DIR}tmp.asm -o ${TMP_DIR}tmp.o `)
-            execSync(`nasm -f elf64 ${NASM_BOOTSTRAP_PATH} -o ${TMP_DIR}/bootstrap.o `)
+            let source_comp = `nasm -f elf64 ${TMP_DIR}tmp.asm -o ${TMP_DIR}tmp.o `
+            let bootstrap_comp = `nasm -f elf64 ${NASM_BOOTSTRAP_PATH} -o ${TMP_DIR}/bootstrap.o `
+            LogManager.log(bootstrap_comp)
+            LogManager.log(source_comp)
+            execSync(source_comp)
+            execSync(bootstrap_comp)
             LogManager.log("Compiled successfully.")
         } catch (err) {
             LogManager.error("Compilation failed.", "Linux_x86_64.ts")
@@ -670,6 +692,7 @@ export class Linux_x86_64 implements INodeVisitor {
         cmd += `${TMP_DIR}tmp.o ${TMP_DIR}bootstrap.o -o ${this.output_filename}`
         cmd = cmd.replace(/(\r\n|\n|\r)/gm, "");
         try {
+            LogManager.log(cmd)
             execSync(cmd)
             LogManager.log("Linked successfully.")
         }

@@ -9,22 +9,9 @@ segment .text
 global _start
 _start:
 	call __bootstrap
-	mov rax, 9
-	mov [arg], rax
 	; ------ funccall -> printf
-	; ------ funccall -> fact
-	mov rax, [arg]
+	mov rax, str_bDEu26qSSH
 	mov rdi, rax
-	sub rsp, 16
-	mov rax, 0
-	call fact
-	add rsp, 16
-	; ------ funccall end -> fact
-	mov rdx, rax
-	mov rax, str_TrvCLTpyRD
-	mov rdi, rax
-	mov rax, [arg]
-	mov rsi, rax
 	sub rsp, 16
 	mov rax, 0
 	call printf
@@ -34,79 +21,7 @@ _start:
 	mov rax, 60
 	xor rdi, rdi
 	syscall
-fact:
-	push rbp
-	mov rbp, rsp
-	push rdi
-COND_START__PVyMt___0:
-BINOP_START__r5EX0___4:
-	push rbx
-	mov rax, 1
-	mov rbx, rax
-	mov rax, [rbp-8]
-COMP_START__DqjLy___5:
-	cmp rax, rbx
-	jg COMP_RIGHT__qUzIt___6
-	xor rax, rax
-	jmp COMP_END__SBOnt___7
-COMP_RIGHT__qUzIt___6:
-	mov rax, 1
-COMP_END__SBOnt___7:
-	pop rbx
-BINOP_END__EVhZF___8:
-	test rax, rax
-	jz IF_END__HZAYc___2
-IF_START__yW9zN___1:
-BINOP_START__GrYGI___9:
-	push rbx
-	mov rax, [rbp-8]
-	mov rbx, rax
-	; ------ funccall -> fact
-BINOP_START__6OMKs___10:
-	push rbx
-	mov rax, 1
-	mov rbx, rax
-	mov rax, [rbp-8]
-	mov [buffer_xaqx4], rax
-	fild qword [buffer_xaqx4]
-	mov [buffer_xaqx4], rbx
-	fild qword [buffer_xaqx4]
-	fsub
-	fistp qword [buffer_xaqx4]
-	mov rax, [buffer_xaqx4]
-	pop rbx
-BINOP_END__aYXCt___11:
-	mov rdi, rax
-	sub rsp, 16
-	mov rax, 0
-	call fact
-	add rsp, 16
-	; ------ funccall end -> fact
-	mov [buffer_xaqx4], rax
-	fild qword [buffer_xaqx4]
-	mov [buffer_xaqx4], rbx
-	fild qword [buffer_xaqx4]
-	fmul
-	fistp qword [buffer_xaqx4]
-	mov rax, [buffer_xaqx4]
-	pop rbx
-BINOP_END__Krkmd___12:
-	mov rsp, rbp
-	pop rbp
-	ret
-	jmp COND_END__I8p4V___3
-IF_END__HZAYc___2:
-COND_END__I8p4V___3:
-	mov rax, 1
-	mov rsp, rbp
-	pop rbp
-	ret
-	xor rax, rax
-	mov rsp, rbp
-	pop rbp
-	ret
 segment .bss
-	arg resb 8
 segment .data
-	buffer_xaqx4 dq 0
-	str_TrvCLTpyRD db `fact %d => %d\n`,0
+	buffer_KCYAw dq 0
+	str_bDEu26qSSH db `hello\n`,0
