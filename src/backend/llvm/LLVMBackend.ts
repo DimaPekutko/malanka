@@ -1,10 +1,10 @@
 import BaseBackend from "./../../backend/BaseBackend";
-import { ArrayDeclStmNode, ArrayExprNode, ArrayMemberAssignStmNode, ArrayMemberNode, AssignStmNode, AstNode, BinOpNode, BlockStmNode, EOFStmNode, ForStmNode, FuncCallStmNode, FuncDeclStmNode, IfStmNode, LiteralNode, ProgramNode, ReturnStmNode, SharedImpStmNode, UnOpNode, VarDeclStmNode, VarNode } from "frontend/AST/AST";
+import { ArrayDeclStmNode, ArrayExprNode, ArrayMemberAssignStmNode, ArrayMemberNode, AssignStmNode, AstNode, BinOpNode, BlockStmNode, EOFStmNode, ForStmNode, FuncCallStmNode, FuncDeclStmNode, IfStmNode, LiteralNode, ProgramNode, ReturnStmNode, SharedImpStmNode, TypeNode, UnOpNode, VarDeclStmNode, VarNode } from "frontend/AST/AST";
 import { INodeVisitor } from "./../../frontend/AST/INodeVisitor";
 import { SymbolManager } from "./../../frontend/SymbolManager";
 import path from "path";
 import llvm from "llvm-bindings";
-import { dump } from "utils";
+import { dump, uid } from "utils";
 import { DATA_TYPES } from "./../../frontend/DataTypes";
 import { COMPILER_CONFIG } from "./../../config/CompilerConfig";
 import { exit } from "process";
@@ -16,6 +16,7 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
   ctx: llvm.LLVMContext
   builder: llvm.IRBuilder
   cur_module: llvm.Module
+  func_scopes_stack: llvm.Function[]
 
   constructor(ast: AstNode, symbol_manager: SymbolManager) {
     super(ast, symbol_manager)
@@ -24,8 +25,9 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
     this.ctx = new llvm.LLVMContext()
     this.builder = new llvm.IRBuilder(this.ctx)
     this.cur_module = new llvm.Module("main_module", this.ctx)
+    this.func_scopes_stack = []
   }
-  visit_ProgramNode(node: ProgramNode): void {
+  visit_ProgramNode(node: ProgramNode): llvm.Value {
 
     llvm.InitializeAllTargetInfos()
     llvm.InitializeAllTargets()
@@ -33,16 +35,45 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
     llvm.InitializeAllAsmParsers()
     llvm.InitializeAllAsmPrinters()
 
-    this.visit(node.body)
+    // Creating main function
+    const main_proto = llvm.FunctionType.get(
+      llvm.Type.getInt32Ty(this.ctx),
+      false
+    )
 
+    const main_func = llvm.Function.Create(
+      main_proto,
+      llvm.Function.LinkageTypes.ExternalLinkage,
+      "main",
+      this.cur_module
+    )
+
+    // const entry_bb = llvm.BasicBlock.Create(this.ctx, uid(5), main_func)
+    // this.builder.SetInsertPoint(entry_bb)
+    
+    // all statements will be located at main funcion scope
+    this.func_scopes_stack.push(main_func)
+    this.visit(node.body)
+    this.func_scopes_stack.pop()
+
+    this.builder.CreateRet(llvm.ConstantInt.get(
+      this.ctx,
+      new llvm.APInt(32, 0, true)
+    ))
+
+    return main_func
   }
   visit_BlockStmNode(node: BlockStmNode): llvm.Value {
-    throw new Error("Method not implemented.");
+    const parent_func = this.get_parent_func()
+
+    const basic_block = llvm.BasicBlock.Create(this.ctx, uid(5), parent_func)
+    this.builder.SetInsertPoint(basic_block)
 
     node.children.forEach(stm => {
       this.visit(stm)
     })
 
+    return basic_block
   }
   visit_AssignStmNode(node: AssignStmNode): void {
     throw new Error("Method not implemented.");
@@ -72,78 +103,15 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
   visit_ReturnStmNode(node: ReturnStmNode): void {
     throw new Error("Method not implemented.");
   }
-  
   visit_VarDeclStmNode(node: VarDeclStmNode): llvm.Value {
-    // const proto  = llvm.FunctionType.get(
-      // llvm.GlobalVariable
-      throw 42
-    //   this.builder.getInt32Ty(), 
-    //   true
-    // );
-    // const printf = llvm.Function.Create(
-    //   proto, 
-    //   llvm.Function.LinkageTypes.ExternalLinkage, 
-    //   "printf", 
-    //   this.cur_module)
+    const parent_func = this.get_parent_func()
+
+    const var_type = this.get_llvm_type(node.type)
+    const var_value = this.visit(node.init_value)
     
-    // const scope = llvm.Function.Create(
-    //   llvm.FunctionType.get(llvm.Type.getVoidTy(this.ctx), [], false),
-    //   llvm.Function.LinkageTypes.ExternalLinkage,
-    //   "main",
-    //   this.cur_module
-    // )
-  
-    // const entry = llvm.BasicBlock.Create(this.ctx, 'entry', scope);
-    // this.builder.SetInsertPoint(entry)
-
-    // const alloca = this.builder.CreateAlloca(
-    //   llvm.Type.getInt32Ty(this.ctx),
-    //   null,
-    //   node.var_name
-    // )
-
-    
-    // const str = this.builder.CreateGlobalStringPtr("wtf %d \n")
-    // const expr = this.visit(node.init_value)
-    
-    // this.builder.CreateStore(expr, alloca);
-    
-    // const load = this.builder.CreateLoad(
-    //   llvm.Type.getInt32Ty(this.ctx),
-    //   alloca,
-    //   node.var_name
-    // )
-    
-    // // console.log(load)
-    // // alloc
-    
-    // this.builder.CreateCall(printf, [str, load])
-    // this.builder.CreateRet(expr)
-    
-    // let triple = llvm.config.LLVM_DEFAULT_TARGET_TRIPLE
-    // this.cur_module.setTargetTriple(triple)
-
-    // llvm.WriteBitcodeToFile(this.cur_module, COMPILER_CONFIG.output_file+".bc")
-
-    // return scope
-
-    // // const a = this.builder
-
-    // const expr: any = this.visit(node.init_value)
-
-    // const _var = new llvm.GlobalVariable(
-    //   llvm.Type.getInt32Ty(this.ctx),
-    //   false,
-    //   llvm.GlobalValue.LinkageTypes.CommonLinkage,
-    //   null,
-    //   node.var_name
-    // )
-
-    // _var.setInitializer(expr)
-    // this.cur_module.
-
-    // return _var
-    // return expr
+    const alloca = this.create_entry_block_alloca(parent_func, node.var_name, var_type)
+    this.builder.CreateStore(var_value, alloca)
+    return var_value
   }
   visit_ArrayDeclStmNode(node: ArrayDeclStmNode): void {
     throw new Error("Method not implemented.");
@@ -174,10 +142,32 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
     let visit_method = "this.visit_" + node.constructor.name + "(node)"
     return eval(visit_method)
   }
-
+  get_parent_func(): llvm.Function {
+    return this.func_scopes_stack[this.func_scopes_stack.length-1]
+  }
+  get_llvm_type(type_node: TypeNode): llvm.Type {
+    switch (type_node.name) {
+      case DATA_TYPES.int:
+        return llvm.Type.getInt32Ty(this.ctx)    
+      case DATA_TYPES.doub:
+        return llvm.Type.getDoubleTy(this.ctx)
+      default:
+        return llvm.Type.getVoidTy(this.ctx)
+    }
+  }
+  create_entry_block_alloca(func: llvm.Function, name: string, type: llvm.Type): llvm.AllocaInst {
+    const sub_builder = new llvm.IRBuilder(func.getEntryBlock())
+    const alloca = sub_builder.CreateAlloca(type, null, name)
+    return alloca
+  }
   compile(): void {
     const result = this.visit(this.ast)
     console.log(this.cur_module.print())
+
+
+    let triple = llvm.config.LLVM_DEFAULT_TARGET_TRIPLE
+    this.cur_module.setTargetTriple(triple)
+    llvm.WriteBitcodeToFile(this.cur_module, COMPILER_CONFIG.output_file + ".bc")
   }
 
 }
