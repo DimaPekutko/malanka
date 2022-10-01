@@ -4,7 +4,7 @@ import { INodeVisitor } from "./../../frontend/AST/INodeVisitor";
 import { SymbolManager } from "./../../frontend/SymbolManager";
 import path from "path";
 import llvm from "llvm-bindings";
-import { dump, uid } from "utils";
+import { dump, uid } from "./../../utils";
 import { DATA_TYPES } from "./../../frontend/DataTypes";
 import { COMPILER_CONFIG } from "./../../config/CompilerConfig";
 import { exit } from "process";
@@ -17,6 +17,8 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
   builder: llvm.IRBuilder
   cur_module: llvm.Module
   func_scopes_stack: llvm.Function[]
+
+  _debug_printf_func: llvm.Function | null = null
 
   constructor(ast: AstNode, symbol_manager: SymbolManager) {
     super(ast, symbol_manager)
@@ -35,6 +37,13 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
     llvm.InitializeAllAsmParsers()
     llvm.InitializeAllAsmPrinters()
 
+    this._debug_printf_func = llvm.Function.Create(
+      llvm.FunctionType.get(llvm.Type.getInt32Ty(this.ctx), true),
+      llvm.Function.LinkageTypes.ExternalLinkage,
+      "printf",
+      this.cur_module
+    )
+
     // Creating main function
     const main_proto = llvm.FunctionType.get(
       llvm.Type.getInt32Ty(this.ctx),
@@ -48,9 +57,6 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
       this.cur_module
     )
 
-    // const entry_bb = llvm.BasicBlock.Create(this.ctx, uid(5), main_func)
-    // this.builder.SetInsertPoint(entry_bb)
-    
     // all statements will be located at main funcion scope
     this.func_scopes_stack.push(main_func)
     this.visit(node.body)
@@ -75,8 +81,16 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
 
     return basic_block
   }
-  visit_AssignStmNode(node: AssignStmNode): void {
-    throw new Error("Method not implemented.");
+  visit_AssignStmNode(node: AssignStmNode): llvm.Value {
+    const parent_func = this.get_parent_func()
+
+    const var_type = this.get_llvm_type(node.type)
+    const var_value = this.visit(node.value)
+
+    const alloca = this.create_entry_block_alloca(parent_func, node.name, var_type)
+    this.builder.CreateStore(var_value, alloca)
+
+    return var_value
   }
   visit_BinOpNode(node: BinOpNode): void {
     throw new Error("Method not implemented.");
@@ -111,6 +125,7 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
     
     const alloca = this.create_entry_block_alloca(parent_func, node.var_name, var_type)
     this.builder.CreateStore(var_value, alloca)
+  
     return var_value
   }
   visit_ArrayDeclStmNode(node: ArrayDeclStmNode): void {
@@ -132,7 +147,7 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
     throw new Error("Method not implemented.");
   }
   visit_SharedImpStmNode(node: SharedImpStmNode): void {
-
+    
   }
   visit_EOFStmNode(node: EOFStmNode): void {
 
@@ -141,6 +156,14 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
     // It's dirty, but there are no need to write a complex if else structure
     let visit_method = "this.visit_" + node.constructor.name + "(node)"
     return eval(visit_method)
+  }
+  debug_printf(str: string, args: llvm.Value[]): void {
+    const global_str = this.builder.CreateGlobalString(
+      str, uid(5), 500, this.cur_module)
+    
+    args.unshift(global_str)
+      
+    this.builder.CreateCall(this._debug_printf_func!, args, "printf")
   }
   get_parent_func(): llvm.Function {
     return this.func_scopes_stack[this.func_scopes_stack.length-1]

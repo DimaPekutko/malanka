@@ -5,7 +5,7 @@ export abstract class AstNode {
     token!: Token
 }
 
-export abstract class AstStatementNode extends AstNode {}
+export abstract class AstStatementNode extends AstNode { }
 
 export class BlockStmNode extends AstStatementNode {
     children: AstStatementNode[]
@@ -35,12 +35,13 @@ export class TypeNode extends AstNode {
 
 export class AssignStmNode extends AstStatementNode {
     name: string
+    type!: TypeNode
     value: any
     constructor(name: string, value: any) {
         super()
         this.name = name
         this.value = value
-    } 
+    }
 }
 
 

@@ -82,9 +82,13 @@ export class SemanticAnalyzer implements INodeVisitor {
     }
     visit_AssignStmNode(node: AssignStmNode): void {
         let var_name: string = node.name
-        if (this.current_scope?.get(var_name) === null) {
+        let symbol = this.current_scope?.get(var_name)
+        if (symbol instanceof VarSymbol) {
+            node.type = symbol.type
+        }
+        else {
             LogManager.error(
-                `Symbol "${var_name}" did not declared.`,
+                `Varaible "${var_name}" did not declared.`,
                 "SemanticAnalyzer.ts"
             )
         }
