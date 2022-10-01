@@ -2,6 +2,7 @@ import util from "util";
 import { execSync } from "child_process"
 import { existsSync, readFileSync } from "fs";
 import chalk from "chalk";
+import { COMPILER_CONFIG } from "./config/CompilerConfig";
 
 // log full object
 export const dump = (obj: any) :void => {
@@ -75,7 +76,6 @@ export abstract class SharedLibManager {
 
 export abstract class LogManager {
     private static full_log = ``
-    static to_log: boolean = false
     static error(msg: string, from: string): void {
         let error = chalk.red("[ERROR] ") + from + ": " + msg
         console.log(error)
@@ -83,14 +83,14 @@ export abstract class LogManager {
         exit()
     }
     static log(msg: string, from: string = ":") {
-        if(this.to_log) {
+        if(COMPILER_CONFIG.to_log) {
             let message = chalk.blueBright("[LOG] ") + from + ": " + msg
             console.log(message)
             this.full_log += (message + "\n")
         }
     }
     static success(msg: string, from: string = "=> :") {
-        if(this.to_log) {
+        if(COMPILER_CONFIG.to_log) {
             let message = chalk.greenBright("[SUCCESS] ") + from + ": " + msg
             console.log(message)
             this.full_log += (message + "\n")

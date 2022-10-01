@@ -1,12 +1,2 @@
-dlib "lc"
-
-
-
-
-
-
-printf("hello\n")
-
-
-
+my_var @int = 100
 

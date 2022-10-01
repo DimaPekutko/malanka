@@ -2,9 +2,9 @@
 
 import CompilerCLI from './cli/CompilerCLI';
 import { LogManager } from 'utils';
+import { COMPILER_CONFIG } from './config/CompilerConfig';
 
 const main = () => {
-    LogManager.to_log = true
     const ui = new CompilerCLI()
     ui.parse()
 }

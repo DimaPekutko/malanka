@@ -6,7 +6,7 @@
   "scripts": {
     "start": "TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ts-node -r tsconfig-paths/register src/index.ts",
     "build": "tsc",
-    "compiler": "node ./build/index.js",
+    "compiler": "node ./build/src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "chalk": "^2.4.2",
-    "commander": "^9.1.0"
+    "commander": "^9.1.0",
+    "llvm-bindings": "^0.4.2"
   }
 }

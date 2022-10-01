@@ -8,6 +8,8 @@ import { INodeVisitor } from './../../frontend/AST/INodeVisitor';
 import { SymbolManager, VarSymbol } from './../../frontend/SymbolManager';
 import { DATA_TYPES } from './../../frontend/DataTypes';
 import * as SYSTEM_SYMBOLS from "./../../frontend/SystemSymbols"
+import { COMPILER_CONFIG } from './../../config/CompilerConfig';
+import { Linux_x86_64 } from './../../backend/x86_64/Linux_x86_64';
 
 
 export class SemanticAnalyzer implements INodeVisitor {
@@ -368,7 +370,11 @@ export class SemanticAnalyzer implements INodeVisitor {
             )
         }
         if (!this.symbol_manager.shared_libs_list.includes(node.str)) {
-            this.symbol_manager.load_shared_symbols(node.str)
+            // this.symbol_manager.shared_libs_list.push(node.str)
+
+            if (COMPILER_CONFIG.backend === Linux_x86_64) {
+                this.symbol_manager.load_shared_symbols(node.str)
+            }
         }
     }
     visit_EOFStmNode(node: EOFStmNode): void {

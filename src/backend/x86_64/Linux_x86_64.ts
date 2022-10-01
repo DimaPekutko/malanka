@@ -8,15 +8,15 @@ import { writeFileSync, existsSync, mkdirSync } from "fs"
 import { execSync } from "child_process"
 import path from "path"
 import { cwd } from "process"
-
-
 import { BinOpNode, UnOpNode, LiteralNode, AstNode, AssignStmNode, BlockStmNode, ProgramNode, VarNode, SharedImpStmNode, FuncCallStmNode, EOFStmNode, VarDeclStmNode, IfStmNode, ForStmNode, FuncDeclStmNode, AstStatementNode, ReturnStmNode, TypedAstNode, ArrayDeclStmNode, ArrayExprNode, ArrayMemberNode, ArrayMemberAssignStmNode } from "./../../frontend/AST/AST";
 import { INodeVisitor } from "./../../frontend/AST/INodeVisitor";
 import { TOKEN_TYPES } from "./../../frontend/SyntaxAnalyzer/Tokens";
+import BaseBackend from '../BaseBackend';
+import { COMPILER_CONFIG } from './../../config/CompilerConfig';
 
 
-const NASM_BOOTSTRAP_PATH = path.join(__dirname+"/../../../bootstrap/nasm_x86_64_linux.asm")
-const TMP_DIR = path.join(cwd()+"/tmp/")
+const NASM_BOOTSTRAP_PATH = path.join(__dirname + "/../../../bootstrap/nasm_x86_64_linux.asm")
+const TMP_DIR = path.join(cwd() + "/tmp/")
 
 
 class NasmWriter {
@@ -26,40 +26,40 @@ class NasmWriter {
     private _data: string = `segment .data`
     private _label_counter: number = 0
     ifelse_buffer_labels: string[] = []
-    ifelse_nesting_index: number =  0
+    ifelse_nesting_index: number = 0
     extern(source: string): void {
-        this._extern += ("\n\t"+source)
+        this._extern += ("\n\t" + source)
     }
     text(source: string): void {
-        this._text += ("\n\t"+source)
+        this._text += ("\n\t" + source)
     }
     gen_label(label: string): string {
-        let new_label = (label +"__"+ uid(5) +"___" + this._label_counter)
+        let new_label = (label + "__" + uid(5) + "___" + this._label_counter)
         this._label_counter++
         return new_label
     }
-    add_label (label: string): void {
-        this._text += ("\n"+label+":")
+    add_label(label: string): void {
+        this._text += ("\n" + label + ":")
     }
     bss(source: string): void {
-        this._bss += ("\n\t"+source)
+        this._bss += ("\n\t" + source)
     }
     data(source: string): void {
-        this._data += ("\n\t"+source)
+        this._data += ("\n\t" + source)
     }
     get_source(): string {
-        return this._extern+"\n"+this._text+"\n"+this._bss+"\n"+this._data
-    }    
+        return this._extern + "\n" + this._text + "\n" + this._bss + "\n" + this._data
+    }
 }
 
 class StackFrameManager {
     readonly BUFFER_MEM_NAME: string
-    private symbols: Map<string, number> 
+    private symbols: Map<string, number>
     private local_var_offset: number
     constructor() {
         this.symbols = new Map()
         this.local_var_offset = 0
-        this.BUFFER_MEM_NAME = "buffer_"+uid(5)
+        this.BUFFER_MEM_NAME = "buffer_" + uid(5)
     }
     add_var(name: string, size: number = 8): number {
         this.local_var_offset += size
@@ -75,17 +75,16 @@ class StackFrameManager {
     }
 }
 
-export class Linux_x86_64 implements INodeVisitor {
+export class Linux_x86_64 extends BaseBackend implements INodeVisitor {
     ast: AstNode
     symbol_manager: SymbolManager
-    output_filename: string
     stack_frame_manager: StackFrameManager
     nasm: NasmWriter
     current_scope: SymbolTable | null = null
-    constructor(ast: AstNode, symbol_manager: SymbolManager, output_filename: string) {
+    constructor(ast: AstNode, symbol_manager: SymbolManager) {
+        super(ast, symbol_manager)
         this.ast = ast
         this.symbol_manager = symbol_manager
-        this.output_filename = path.join(output_filename)
         this.stack_frame_manager = new StackFrameManager()
         this.nasm = new NasmWriter();
     }
@@ -113,7 +112,7 @@ export class Linux_x86_64 implements INodeVisitor {
         node.body.children.sort((stm1: AstStatementNode, stm2: AstStatementNode): any => {
             let func_decl1 = stm1 instanceof FuncDeclStmNode
             let func_decl2 = stm2 instanceof FuncDeclStmNode
-            
+
             if (func_decl1 && !func_decl2) {
                 return 1
             }
@@ -124,7 +123,7 @@ export class Linux_x86_64 implements INodeVisitor {
                 return 0
             }
         })
-        
+
         this.current_scope = this.symbol_manager.get_scope(node.body.uid)
 
         this.load_bootsrap_nasm()
@@ -221,19 +220,19 @@ export class Linux_x86_64 implements INodeVisitor {
         let comp_end_label = this.nasm.gen_label("COMP_END")
         this.nasm.add_label(comp_start_label)
         this.nasm.text("cmp rax, rbx")
-        if(op_type === TOKEN_TYPES.greater_equal_op) {
+        if (op_type === TOKEN_TYPES.greater_equal_op) {
             this.nasm.text(`jge ${right_comp_label}`)
         }
-        else if(op_type === TOKEN_TYPES.greater_op) {
+        else if (op_type === TOKEN_TYPES.greater_op) {
             this.nasm.text(`jg ${right_comp_label}`)
         }
-        else if(op_type === TOKEN_TYPES.less_equal_op) {
+        else if (op_type === TOKEN_TYPES.less_equal_op) {
             this.nasm.text(`jle ${right_comp_label}`)
         }
-        else if(op_type === TOKEN_TYPES.less_op) {
+        else if (op_type === TOKEN_TYPES.less_op) {
             this.nasm.text(`jl ${right_comp_label}`)
         }
-        else if(op_type === TOKEN_TYPES.equal_op) {
+        else if (op_type === TOKEN_TYPES.equal_op) {
             this.nasm.text(`je ${right_comp_label}`)
         }
         this.nasm.text(`xor rax, rax`)
@@ -254,7 +253,7 @@ export class Linux_x86_64 implements INodeVisitor {
             op_type === TOKEN_TYPES.plus_op ||
             op_type === TOKEN_TYPES.minus_op ||
             op_type === TOKEN_TYPES.mul_op ||
-            op_type === TOKEN_TYPES.div_op    
+            op_type === TOKEN_TYPES.div_op
         ) {
             let is_float_op = node.type.name === DATA_TYPES.doub ? true : false
             this.gen_arithmetic_op(op_type, is_float_op)
@@ -300,11 +299,11 @@ export class Linux_x86_64 implements INodeVisitor {
     visit_UnOpNode(node: UnOpNode): void {
         if (node.token.type === TOKEN_TYPES.address_op && node.left instanceof VarNode) {
             this.gen_addr_recieving_op(node.left)
-            return 
+            return
         }
         else if (node.token.type === TOKEN_TYPES.mul_op && node.left instanceof VarNode) {
             this.gen_dereferencing_op(node.left)
-            return 
+            return
         }
         this.visit(node.left) // generate: mov rax, expr_res
         if (node.token.type === TOKEN_TYPES.minus_op) {
@@ -316,14 +315,14 @@ export class Linux_x86_64 implements INodeVisitor {
                 this.nasm.text("push rbx")
                 this.nasm.text("mov rbx, rax")
                 this.nasm.text("mov rax, 0")
-                this.gen_arithmetic_op(TOKEN_TYPES.minus_op,true)
+                this.gen_arithmetic_op(TOKEN_TYPES.minus_op, true)
                 this.nasm.text("pop rbx")
             }
         }
     }
     visit_LiteralNode(node: LiteralNode): void {
         let value = node.token.value
-            
+
         if (node.type.name == DATA_TYPES.int) {
             this.nasm.text(`mov rax, ${value}`)
         }
@@ -331,8 +330,8 @@ export class Linux_x86_64 implements INodeVisitor {
             this.nasm.text(`mov rax, __float64__(${value})`)
         }
         else if (node.type.name == DATA_TYPES.str) {
-            let str_name = "str_"+uid(10)
-            this.nasm.data(str_name+" db `"+value+"`,0")
+            let str_name = "str_" + uid(10)
+            this.nasm.data(str_name + " db `" + value + "`,0")
             this.nasm.text(`mov rax, ${str_name}`)
         }
     }
@@ -388,15 +387,15 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     visit_FuncDeclStmNode(node: FuncDeclStmNode): void {
         const arg_registers = [
-            "rdi","rsi","rdx","rcx","r8","r9"
+            "rdi", "rsi", "rdx", "rcx", "r8", "r9"
         ]
         const float_arg_registers = [
-            "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5"
+            "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5"
         ]
         let func_name = node.func_name
         let params = node.params
         let body = node.body
-        
+
         this.nasm.add_label(`${node.func_name}`)
         this.nasm.text(`push rbp`)
         this.nasm.text(`mov rbp, rsp`)
@@ -430,10 +429,10 @@ export class Linux_x86_64 implements INodeVisitor {
 
         this.nasm.text(`xor rax, rax`)
         offset = 0
-        int_args_index = params.length-1
+        int_args_index = params.length - 1
         float_args_index = 0
         // console.log(arg_registers)
-        for (let i = params.length-1; i >= 0; i--) {
+        for (let i = params.length - 1; i >= 0; i--) {
             // offset = this.stack_frame_manager.add_var(params[i].name)
             if (params[i].type.name !== DATA_TYPES.doub) {
                 // this.nasm.text(`mov [rbp-${offset}], ${arg_registers[int_args_index]}`)
@@ -472,7 +471,7 @@ export class Linux_x86_64 implements INodeVisitor {
         else {
             this.nasm.bss(`${var_name} resb 8`)
             this.nasm.text(`mov [${var_name}], rax`)
-        }        
+        }
     }
     visit_VarNode(node: VarNode): void {
         let var_name = node.name
@@ -489,7 +488,7 @@ export class Linux_x86_64 implements INodeVisitor {
     visit_ArrayDeclStmNode(node: ArrayDeclStmNode): void {
         let arr_name = node.array_name
         let arr_size = node.size
-        let arr_length = arr_size.reduce((res, current) => res*current)
+        let arr_length = arr_size.reduce((res, current) => res * current)
         this.nasm.data(`${arr_name} times ${arr_length} dq 0`)
         this.visit(node.init_value)
     }
@@ -559,24 +558,24 @@ export class Linux_x86_64 implements INodeVisitor {
     visit_FuncCallStmNode(node: FuncCallStmNode): void {
         const func_name = node.func_name
         let args = node.args
-        
+
         let default_registers = [
-            "rdi","rsi","rdx","rcx","r8","r9"
+            "rdi", "rsi", "rdx", "rcx", "r8", "r9"
             //str  n     fact
         ]
 
         let float_registers = [
-            "xmm0","xmm1","xmm2","xmm3","xmm4","xmm5"
+            "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5"
         ]
 
-        if(args.length <= default_registers.length) {
+        if (args.length <= default_registers.length) {
             this.nasm.text(`; ------ funccall -> ${func_name}`)
 
             let default_args: AstNode[] = []
             let float_args: AstNode[] = []
             args.forEach(arg => {
                 if (arg instanceof FuncCallStmNode) {
-                    let defined_func = this.current_scope?.get(arg.func_name) 
+                    let defined_func = this.current_scope?.get(arg.func_name)
                     if (defined_func?.IS_EXTERNAL) {
                         LogManager.error(`You cannot specify dynamically imported function as argument (${arg.func_name}()). Try to create var with the result of function and then specify it as an argument. (WILL BE FIXED)`, "Linux_x86_64_ts")
                     }
@@ -596,7 +595,7 @@ export class Linux_x86_64 implements INodeVisitor {
                 if (arg instanceof FuncCallStmNode) {
                     this.visit(arg)
                     this.nasm.text(`mov ${default_registers[i]}, rax`)
-                    default_registers.splice(i,1)
+                    default_registers.splice(i, 1)
                 }
             })
 
@@ -605,7 +604,7 @@ export class Linux_x86_64 implements INodeVisitor {
                 if (arg instanceof FuncCallStmNode) {
                     this.visit(arg)
                     this.nasm.text(`movq ${float_registers[i]}, rax`)
-                    float_registers.splice(i,1)
+                    float_registers.splice(i, 1)
                 }
             })
 
@@ -636,7 +635,7 @@ export class Linux_x86_64 implements INodeVisitor {
 
     }
     visit_SharedImpStmNode(node: SharedImpStmNode): void {
-        
+
     }
     visit_EOFStmNode(node: EOFStmNode): void {
         // console.log("hello")
@@ -647,7 +646,7 @@ export class Linux_x86_64 implements INodeVisitor {
     }
     visit(node: AstNode): any {
         // It's dirty, but there are no need to write a complex if else structure
-        let visit_method = "this.visit_"+node.constructor.name+"(node)"
+        let visit_method = "this.visit_" + node.constructor.name + "(node)"
         return eval(visit_method)
     }
     compile(): void {
@@ -661,7 +660,7 @@ export class Linux_x86_64 implements INodeVisitor {
         this.compile_nasm()
         this.link_obj()
 
-        LogManager.success(`Run by: ${this.output_filename}.`)
+        LogManager.success(`Run by: ${COMPILER_CONFIG.output_file}.`)
     }
     private compile_nasm(): void {
         try {
@@ -681,15 +680,15 @@ export class Linux_x86_64 implements INodeVisitor {
         let linker_path = ``
         if (this.symbol_manager.shared_libs_list.length > 0) {
             let libs_shortnames = this.symbol_manager.shared_libs_list
-            libs_shortnames.forEach(name => cmd += "-"+name+" ")
+            libs_shortnames.forEach(name => cmd += "-" + name + " ")
             cmd += `-dynamic-linker `
             linker_path = SharedLibManager.find_ld_linker_path()
-            cmd += (linker_path+" ")
+            cmd += (linker_path + " ")
             // this.symbol_manager.shared_libs_list.forEach(lib_path => {
             //     cmd += (lib_path+" ")
             // })
         }
-        cmd += `${TMP_DIR}tmp.o ${TMP_DIR}bootstrap.o -o ${this.output_filename}`
+        cmd += `${TMP_DIR}tmp.o ${TMP_DIR}bootstrap.o -o ${COMPILER_CONFIG.output_file}`
         cmd = cmd.replace(/(\r\n|\n|\r)/gm, "");
         try {
             LogManager.log(cmd)
@@ -700,5 +699,5 @@ export class Linux_x86_64 implements INodeVisitor {
             LogManager.error("Linking failed.", "Linux_x86_64.ts")
         }
     }
-    
+
 }
