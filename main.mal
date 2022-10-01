@@ -3,4 +3,4 @@ dlib "lc"
 my_var @int = 100
 s @int = 3
 
-s = 2
+s = 0 == 4

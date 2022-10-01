@@ -8,6 +8,7 @@ import { dump, uid } from "./../../utils";
 import { DATA_TYPES } from "./../../frontend/DataTypes";
 import { COMPILER_CONFIG } from "./../../config/CompilerConfig";
 import { exit } from "process";
+import { TOKEN_TYPES } from "./../../frontend/SyntaxAnalyzer/Tokens";
 
 
 export class LLVMBackend extends BaseBackend implements INodeVisitor {
@@ -90,10 +91,87 @@ export class LLVMBackend extends BaseBackend implements INodeVisitor {
     const alloca = this.create_entry_block_alloca(parent_func, node.name, var_type)
     this.builder.CreateStore(var_value, alloca)
 
+    const load = this.builder.CreateLoad(var_type, alloca)
+    this.debug_printf("%d", [load])
+
     return var_value
   }
-  visit_BinOpNode(node: BinOpNode): void {
-    throw new Error("Method not implemented.");
+  visit_BinOpNode(node: BinOpNode): llvm.Value {
+    let op = node.token.type
+    let is_float_op = node.type.name === DATA_TYPES.name
+    let lhs = this.visit(node.left)
+    let rhs = this.visit(node.right)
+
+    // arithmetic
+    if (op === TOKEN_TYPES.plus_op) {
+      return is_float_op ?
+        this.builder.CreateFAdd(lhs, rhs, "addtmp") :
+        this.builder.CreateAdd(lhs, rhs, "addtmp")
+    }
+    else if (op === TOKEN_TYPES.minus_op) {
+      return is_float_op ?
+        this.builder.CreateFSub(lhs, rhs, "subtmp") :
+        this.builder.CreateSub(lhs, rhs, "subtmp")
+    }
+    else if (op === TOKEN_TYPES.mul_op) {
+      return is_float_op ?
+        this.builder.CreateFMul(lhs, rhs, "multmp") :
+        this.builder.CreateMul(lhs, rhs, "multmp")
+    }
+    else if (op === TOKEN_TYPES.div_op) {
+      return is_float_op ?
+        this.builder.CreateFDiv(lhs, rhs, "divtmp") :
+        this.builder.CreateSDiv(lhs, rhs, "divtmp")
+    }
+
+    // logic
+    if (op === TOKEN_TYPES.or_op) {
+      return this.builder.CreateOr(lhs, rhs, "ortmp")
+    }
+    else if (op === TOKEN_TYPES.and_op) {
+      // cast to operands to i1 and compare
+      const i1_result = this.builder.CreateAnd(
+        this.builder.CreateIntCast(lhs, llvm.Type.getInt1Ty(this.ctx), true),
+        this.builder.CreateIntCast(rhs, llvm.Type.getInt1Ty(this.ctx), true),
+        "andtmp",
+      )
+      // convert back to type
+      return this.builder.CreateIntCast(i1_result, lhs.getType(), false)
+    }
+
+    // comp
+    if (op === TOKEN_TYPES.greater_op) {
+      const res = is_float_op ?
+        this.builder.CreateFCmpOGT(lhs, rhs, "cmp_gt_tmp") :
+        this.builder.CreateICmpSGT(lhs, rhs, "cmp_gt_tmp")
+      return this.builder.CreateIntCast(res, lhs.getType(), false)
+    }
+    else if (op === TOKEN_TYPES.greater_equal_op) {
+      const res = is_float_op ?
+        this.builder.CreateFCmpOGE(lhs, rhs, "cmp_ge_tmp") :
+        this.builder.CreateICmpSGE(lhs, rhs, "cmp_ge_tmp")
+      return this.builder.CreateIntCast(res, lhs.getType(), false)
+    }
+    else if (op === TOKEN_TYPES.less_op) {
+      const res = is_float_op ?
+        this.builder.CreateFCmpOLT(lhs, rhs, "cmp_lt_tmp") :
+        this.builder.CreateICmpSLT(lhs, rhs, "cmp_lt_tmp")
+      return this.builder.CreateIntCast(res, lhs.getType(), false)
+    }
+    else if (op === TOKEN_TYPES.less_op) {
+      const res =  is_float_op ?
+        this.builder.CreateFCmpOLE(lhs, rhs, "cmp_le_tmp") :
+        this.builder.CreateICmpSLE(lhs, rhs, "cmp_le_tmp")
+      return this.builder.CreateIntCast(res, lhs.getType(), false)
+    }
+    else if (op === TOKEN_TYPES.equal_op) {
+      const res =  is_float_op ?
+        this.builder.CreateFCmpOEQ(lhs, rhs, "cmp_eq_tmp") :
+        this.builder.CreateICmpEQ(lhs, rhs, "cmp_eq_tmp")
+      return this.builder.CreateIntCast(res, lhs.getType(), false)
+    }
+
+    return lhs
   }
   visit_UnOpNode(node: UnOpNode): void {
     throw new Error("Method not implemented.");

@@ -255,7 +255,7 @@ export class Linux_x86_64 extends BaseBackend implements INodeVisitor {
             op_type === TOKEN_TYPES.mul_op ||
             op_type === TOKEN_TYPES.div_op
         ) {
-            let is_float_op = node.type.name === DATA_TYPES.doub ? true : false
+            let is_float_op = node.type.name === DATA_TYPES.doub
             this.gen_arithmetic_op(op_type, is_float_op)
         }
         else if (
