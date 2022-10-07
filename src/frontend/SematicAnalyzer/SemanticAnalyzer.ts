@@ -376,9 +376,9 @@ export class SemanticAnalyzer implements INodeVisitor {
         if (!this.symbol_manager.shared_libs_list.includes(node.str)) {
             // this.symbol_manager.shared_libs_list.push(node.str)
 
-            if (COMPILER_CONFIG.backend === Linux_x86_64) {
+            // if (COMPILER_CONFIG.backend === Linux_x86_64) {
                 this.symbol_manager.load_shared_symbols(node.str)
-            }
+            // }
         }
     }
     visit_EOFStmNode(node: EOFStmNode): void {

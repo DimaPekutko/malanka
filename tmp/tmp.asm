@@ -10,13 +10,20 @@ segment .text
 global _start
 _start:
 	call __bootstrap
-	mov rax, 100
-	mov [my_var], rax
 	; ------ funccall -> printf
-	mov rax, str_njtjlTE6mP
+	; ------ funccall -> f
+	mov rax, 16
 	mov rdi, rax
-	mov rax, [my_var]
+	mov rax, 16
 	mov rsi, rax
+	sub rsp, 16
+	mov rax, 0
+	call f
+	add rsp, 16
+	; ------ funccall end -> f
+	mov rsi, rax
+	mov rax, str_Ru8LjJldLW
+	mov rdi, rax
 	sub rsp, 16
 	mov rax, 0
 	call printf
@@ -26,8 +33,35 @@ _start:
 	mov rax, 60
 	xor rdi, rdi
 	syscall
+f:
+	push rbp
+	mov rbp, rsp
+	push rdi
+	push rsi
+BINOP_START__LJTpA___0:
+	push rbx
+	mov rax, [rbp-16]
+	mov rbx, rax
+	mov rax, [rbp-8]
+	mov [buffer_1GTp3], rax
+	fild qword [buffer_1GTp3]
+	mov [buffer_1GTp3], rbx
+	fild qword [buffer_1GTp3]
+	fmul
+	fistp qword [buffer_1GTp3]
+	mov rax, [buffer_1GTp3]
+	pop rbx
+BINOP_END__eUMwa___1:
+	mov rsp, rbp
+	pop rbp
+	ret
+	xor rax, rax
+	pop rsi
+	pop rdi
+	mov rsp, rbp
+	pop rbp
+	ret
 segment .bss
-	my_var resb 8
 segment .data
-	buffer_XmxaV dq 0
-	str_njtjlTE6mP db `hello %d\n`,0
+	buffer_1GTp3 dq 0
+	str_Ru8LjJldLW db `result=%d\n`,0
